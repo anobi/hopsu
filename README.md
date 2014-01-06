@@ -1,0 +1,4 @@
+hopsu
+=====
+
+haskell irc bot
