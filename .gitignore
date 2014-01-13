@@ -4,6 +4,7 @@ cabal-dev
 *.hi
 *.chi
 *.chs.h
+*.swp
 .virthualenv
 .cabal-sandbox
 .cabal.sabdbox.config
