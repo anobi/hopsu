@@ -1,0 +1,423 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Data.ConfigFile</title><link href="ocean.css" rel="stylesheet" type="text/css" title="Ocean" /><script src="haddock-util.js" type="text/javascript"></script><script type="text/javascript">//<![CDATA[
+window.onload = function () {pageLoad();setSynopsis("mini_Data-ConfigFile.html");};
+//]]>
+</script></head><body><div id="package-header"><ul class="links" id="page-menu"><li><a href="index.html">Contents</a></li><li><a href="doc-index.html">Index</a></li></ul><p class="caption">ConfigFile-1.1.1: Configuration file reading &amp; writing</p></div><div id="content"><div id="module-header"><table class="info"><tr><th>Portability</th><td>portable</td></tr><tr><th>Stability</th><td>provisional</td></tr><tr><th>Maintainer</th><td>John Goerzen &lt;jgoerzen@complete.org&gt;</td></tr><tr><th>Safe Haskell</th><td>None</td></tr></table><p class="caption">Data.ConfigFile</p></div><div id="table-of-contents"><p class="caption">Contents</p><ul><li><a href="#g:1">Introduction
+</a><ul><li><a href="#g:2">Features
+</a></li><li><a href="#g:3">History
+</a></li></ul></li><li><a href="#g:4">Configuration File Format
+</a><ul><li><a href="#g:5">White Space
+</a></li><li><a href="#g:6">Comments
+</a></li><li><a href="#g:7">Case Sensitivity
+</a></li><li><a href="#g:8">Interpolation
+</a></li></ul></li><li><a href="#g:9">Usage Examples
+</a><ul><li><a href="#g:10">Non-Monadic Usage
+</a></li><li><a href="#g:11">Error Monad Usage
+</a></li><li><a href="#g:12">Combined Error/IO Monad Usage
+</a></li></ul></li><li><a href="#g:13">Types
+</a></li><li><a href="#g:14">Initialization
+</a></li><li><a href="#g:15">Configuring the ConfigParser
+</a><ul><li><a href="#g:16">Access Functions
+</a></li></ul></li><li><a href="#g:17">Reading
+</a></li><li><a href="#g:18">Accessing Data
+</a></li><li><a href="#g:19">Modifying Data
+</a></li><li><a href="#g:20">Output Data
+</a></li></ul></div><div id="description"><p class="caption">Description</p><div class="doc"><p>Configuration file parsing, generation, and manipulation
+</p><p>Copyright (c) 2004-2008 John Goerzen, jgoerzen@complete.org
+</p><p>This module contains extensive documentation.  Please scroll down to the Introduction section to continue reading.
+</p></div></div><div id="synopsis"><p id="control.syn" class="caption expander" onclick="toggleSection('syn')">Synopsis</p><ul id="section.syn" class="hide" onclick="toggleSection('syn')"><li class="src short"><span class="keyword">type</span> <a href="#t:SectionSpec">SectionSpec</a> = <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></li><li class="src short"><span class="keyword">type</span> <a href="#t:OptionSpec">OptionSpec</a> = <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></li><li class="src short"><span class="keyword">data</span>  <a href="#t:ConfigParser">ConfigParser</a>  = <a href="#v:ConfigParser">ConfigParser</a> {<ul class="subs"><li><a href="#v:content">content</a> :: <a href="Data-ConfigFile-Types.html#t:CPData">CPData</a></li><li><a href="#v:optionxform">optionxform</a> :: <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a></li><li><a href="#v:defaulthandler">defaulthandler</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Either.html#t:Either">Either</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></li><li><a href="#v:usedefault">usedefault</a> :: <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Bool.html#t:Bool">Bool</a></li><li><a href="#v:accessfunc">accessfunc</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Either.html#t:Either">Either</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></li></ul>}</li><li class="src short"><span class="keyword">data</span>  <a href="#t:CPErrorData">CPErrorData</a> <ul class="subs"><li>= <a href="#v:ParseError">ParseError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a>  </li><li>| <a href="#v:SectionAlreadyExists">SectionAlreadyExists</a> <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a>  </li><li>| <a href="#v:NoSection">NoSection</a> <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a>  </li><li>| <a href="#v:NoOption">NoOption</a> <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a>  </li><li>| <a href="#v:OtherProblem">OtherProblem</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a>  </li><li>| <a href="#v:InterpolationError">InterpolationError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a>  </li></ul></li><li class="src short"><span class="keyword">type</span> <a href="#t:CPError">CPError</a> = (<a href="Data-ConfigFile.html#t:CPErrorData">CPErrorData</a>, <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a>)</li><li class="src short"><a href="#v:emptyCP">emptyCP</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><a href="#v:simpleAccess">simpleAccess</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></li><li class="src short"><a href="#v:interpolatingAccess">interpolatingAccess</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Int.html#t:Int">Int</a> -&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></li><li class="src short"><a href="#v:readfile">readfile</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Users/anobi/Projects/Code/Haskell/hopsu/.cabal-sandbox/share/doc/x86_64-osx-ghc-7.6.3/MissingH-1.2.0.2/html/System-IO-HVFS.html#t:FilePath">FilePath</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/System-IO.html#t:IO">IO</a> (m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a>)</li><li class="src short"><a href="#v:readhandle">readhandle</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/GHC-IO-Handle.html#t:Handle">Handle</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/System-IO.html#t:IO">IO</a> (m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a>)</li><li class="src short"><a href="#v:readstring">readstring</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><span class="keyword">class</span>  <a href="#t:Get_C">Get_C</a> a  <span class="keyword">where</span><ul class="subs"><li><a href="#v:get">get</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m a</li></ul></li><li class="src short"><a href="#v:sections">sections</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; [<a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a>]</li><li class="src short"><a href="#v:has_section">has_section</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Bool.html#t:Bool">Bool</a></li><li class="src short"><a href="#v:options">options</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m [<a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a>]</li><li class="src short"><a href="#v:has_option">has_option</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Bool.html#t:Bool">Bool</a></li><li class="src short"><a href="#v:items">items</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m [(<a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a>, <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a>)]</li><li class="src short"><a href="#v:set">set</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><a href="#v:setshow">setshow</a> :: (<a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Text-Show.html#t:Show">Show</a> a, <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m) =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; a -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><a href="#v:remove_option">remove_option</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><a href="#v:add_section">add_section</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><a href="#v:remove_section">remove_section</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><a href="#v:merge">merge</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></li><li class="src short"><a href="#v:to_string">to_string</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></li></ul></div><div id="interface"><h1 id="g:1">Introduction
+</h1><div class="doc"><p>Many programs need configuration files. These configuration files are
+typically used to configure certain runtime behaviors that need to be
+saved across sessions. Various different configuration file formats
+exist.
+</p><p>The ConfigParser module attempts to define a standard format that is
+easy for the user to edit, easy for the programmer to work with, yet
+remains powerful and flexible.
+</p></div><h2 id="g:2">Features
+</h2><div class="doc"><p>For the programmer, this module provides:
+</p><ul><li> Simple calls to both read <em>and write</em> configuration files
+</li><li> Call that can generate a string version of a file that is
+   re-parsable by this module (useful for, for instance, sending the
+   file down a network)
+</li><li> Segmented configuration files that let you separate configuration
+   into distinct sections, each with its own namespace. This can be
+   used to configure multiple modules in one file, to configure
+   multiple instances of a single object, etc.
+</li><li> On-the-fly parsing of integer, boolean, float, multi-line string values,
+   and anything else Haskell's read can deal with
+</li><li> It is possible to make a configuration file parsable by this
+   module, the Unix shell, and/or Unix make, though some feautres are,
+   of course, not compatible with these other tools.
+</li><li> Syntax checking with error reporting including line numbers
+</li><li> Implemented in pure Haskell.  No dependencies on modules outside
+   the standard library distributed with Haskell compilers or interpreters.
+   All calls except those that read directly from a handle are pure calls
+   and can be used outside the IO monad.
+</li><li> Comprehensive documentation
+</li><li> Extensible API
+</li><li> Complete compatibility with Python's ConfigParser module, or my
+   ConfigParser module for OCaml, part of my MissingLib package.
+</li></ul><p>For the user, this module provides:
+</p><ul><li> Easily human-editable configuration files with a clear, concise,
+   and consistent format
+</li><li> Configuration file format consistent with other familiar formats
+   (/etc/passwd is a valid ConfigParser file)
+</li><li> No need to understand semantics of markup languages like XML
+</li></ul></div><h2 id="g:3">History
+</h2><div class="doc"><p>This module is based on Python's ConfigParser module at
+<a href="http://www.python.org/doc/current/lib/module-ConfigParser.html">http://www.python.org/doc/current/lib/module-ConfigParser.html</a>.  I had
+earlier developed an OCaml implementation as part of my MissingLib library
+at <a href="gopher://gopher.quux.org/devel/missinglib">gopher://gopher.quux.org/devel/missinglib</a>.
+</p><p>While the API of these three modules is similar, and the aim is to preserve all
+useful features of the original Python module, there are some differences
+in the implementation details.  This module is a complete, clean re-implementation
+in Haskell, not a Haskell translation of a Python program.  As such, the feature
+set is slightly different.
+</p></div><h1 id="g:4">Configuration File Format
+</h1><div class="doc"><p>The basic configuration file format resembles that of an old-style
+Windows .INI file. Here are two samples:
+</p><pre>debug = yes
+inputfile = /etc/passwd
+names = Peter, Paul, Mary, George, Abrahaham, John, Bill, Gerald, Richard,
+        Franklin, Woodrow
+color = red
+</pre><p>This defines a file without any explicit section, so all items will
+occur within the default section <code>DEFAULT</code>. The <code>debug</code> option can be read
+as a boolean or a string. The remaining items can be read as a string
+only. The <code>names</code> entry spans two lines -- any line starting with
+whitespace, and containing something other than whitespace or
+comments, is taken as a continuation of the previous line.
+</p><p>Here's another example:
+</p><pre># Default options
+[DEFAULT]
+hostname: localhost
+# Options for the first file
+[file1]
+location: /usr/local
+user: Fred
+uid: 1000
+optionaltext: Hello, this  entire string is included
+[file2]
+location: /opt
+user: Fred
+uid: 1001
+</pre><p>This file defines three sections. The <code>DEFAULT</code> section specifies an
+entry <code>hostname</code>. If you attempt to read the hostname option in any
+section, and that section doesn't define <code>hostname</code>, you will get the
+value from <code>DEFAULT</code> instead. This is a nice time-saver. You can also
+note that you can use colons instead of the = character to separate
+option names from option entries.
+</p></div><h2 id="g:5">White Space
+</h2><div class="doc"><p>Whitespace (spaces, tabs, etc) is automatically stripped from the
+beginning and end of all strings. Thus, users can insert whitespace
+before/after the colon or equal sign if they like, and it will be
+automatically stripped.
+</p><p>Blank lines or lines consisting solely of whitespace are ignored.
+</p><p>A line giving an option or a section name may not begin with white space.
+This requirement is necessary so there is no ambiguity between such lines
+and continuation lines for multi-line options.
+</p></div><h2 id="g:6">Comments
+</h2><div class="doc"><p>Comments are introduced with the pound sign <code>#</code> or the semicolon <code>;</code>. They
+cause the parser to ignore everything from that character to the end
+of the line.
+</p><p>Comments <em>may not</em> occur within the definitions of options; that is, you
+may not place a comment in the middle of a line such as <code>user: Fred</code>.
+That is because the parser considers the comment characters part
+of the string; otherwise, you'd be unable to use those characters in
+your strings. You can, however, &quot;comment out&quot; options by putting the
+comment character at the start of the line.
+</p></div><h2 id="g:7">Case Sensitivity
+</h2><div class="doc"><p>By default, section names are case-sensitive but option names are
+not. The latter can be adjusted by adjusting <code><a href="Data-ConfigFile.html#v:optionxform">optionxform</a></code>.  
+</p></div><h2 id="g:8">Interpolation
+</h2><div class="doc"><p>Interpolation is an optional feature, disabled by default.  If you replace
+the default <code><a href="Data-ConfigFile.html#v:accessfunc">accessfunc</a></code> (<code><a href="Data-ConfigFile.html#v:simpleAccess">simpleAccess</a></code>) with <code><a href="Data-ConfigFile.html#v:interpolatingAccess">interpolatingAccess</a></code>,
+then you get interpolation support with <code><a href="Data-ConfigFile.html#v:get">get</a></code> and the other <code><a href="Data-ConfigFile.html#v:get">get</a></code>-based functions.
+</p><p>As an example, consider the following file:
+</p><pre>arch = i386
+project = test
+filename = test_%(arch)s.c
+dir = /usr/src/%(filename)s
+percent = 5%%
+</pre><p>With interpolation, you would get these results:
+</p><pre>get cp &quot;DEFAULT&quot; &quot;filename&quot; -&gt; &quot;test_i386.c&quot;
+get cp &quot;DEFAULT&quot; &quot;dir&quot; -&gt; &quot;/usr/src/test_i386.c&quot;
+get cp &quot;DEFAULT&quot; &quot;percent&quot; -&gt; &quot;5%&quot;
+</pre><p>For more details on interpolation, please see the documentation for the
+<code><a href="Data-ConfigFile.html#v:interpolatingAccess">interpolatingAccess</a></code> function.
+</p></div><h1 id="g:9">Usage Examples
+</h1><div class="doc"><p>The basic theory of working with ConfigParser is this:
+</p><ol><li> Parse or build a <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> object
+</li><li> Work with it in one of several ways
+</li><li> To make changes, you discard the original object and use a new one.
+    Changes can be <a href="chained.html">chained</a> through one of several monads.
+</li></ol><p>The default <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> object that you always start with is <code><a href="Data-ConfigFile.html#v:emptyCP">emptyCP</a></code>.
+From here, you load data into it (merging data into the empty object),
+set up structures yourself, or adjust options.
+</p><p>Let's take a look at some basic use cases.
+</p></div><h2 id="g:10">Non-Monadic Usage
+</h2><div class="doc"><p>You'll notice that many functions in this module return a
+<code>MonadError <code><a href="Data-ConfigFile.html#t:CPError">CPError</a></code></code> over some
+type.  Although its definition is not this simple, you can consider this to be
+the same as returning <code>Either CPError a</code>.
+</p><p>That is, these functions will return <code>Left error</code> if there's a problem
+or <code>Right result</code> if things are fine.  The documentation for individual
+functions describes the specific circumstances in which an error may occur in
+more detail.
+</p><p>Some people find it annoying to have to deal with errors manually.
+You can transform errors into exceptions in your code by using
+<code><a href="file:///Users/anobi/Projects/Code/Haskell/hopsu/.cabal-sandbox/share/doc/x86_64-osx-ghc-7.6.3/MissingH-1.2.0.2/html/Data-Either-Utils.html#v:forceEither">forceEither</a></code>.  Here's an example of this style of programming:
+</p><pre> import Data.Either.Utils
+ do
+    val &lt;- readfile emptyCP &quot;/etc/foo.cfg&quot;
+    let cp = forceEither val
+    putStrLn &quot;Your setting is:&quot;
+    putStrLn $ forceEither $ get cp &quot;sect1&quot; &quot;opt1&quot;
+</pre><p>In short, you can just put <code>forceEither $</code> in front of every call that returns
+something that is a MonadError.
+This is still a pure functional call, so it can be used outside
+of the IO monads.  The exception, however, can only be caught in the IO
+monad.
+</p><p>If you don't want to bother with <code><a href="file:///Users/anobi/Projects/Code/Haskell/hopsu/.cabal-sandbox/share/doc/x86_64-osx-ghc-7.6.3/MissingH-1.2.0.2/html/Data-Either-Utils.html#v:forceEither">forceEither</a></code>, you can use the error monad.  It's simple and better... read on.
+</p></div><h2 id="g:11">Error Monad Usage
+</h2><div class="doc"><p>The return type is actually defined in terms of the Error monad, which is
+itself based on the Either data type.
+</p><p>Here's a neat example of chaining together calls to build up a <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code>
+object:
+</p><pre>do let cp = emptyCP
+   cp &lt;- add_section cp &quot;sect1&quot;
+   cp &lt;- set cp &quot;sect1&quot; &quot;opt1&quot; &quot;foo&quot;
+   cp &lt;- set cp &quot;sect1&quot; &quot;opt2&quot; &quot;bar&quot;
+   options cp &quot;sect1&quot;
+</pre><p>The return value of this little snippet is <code>Right [&quot;opt1&quot;, &quot;opt2&quot;]</code>.
+(Note to beginners: unlike the IO monad, you <em>can</em> escape from the Error
+monad.)
+</p><p>Although it's not obvious, there actually was error checking there.  If
+any of those calls would have generated an error, processing would have
+stopped immediately and a <code>Left</code> value would have been returned.  Consider
+this example:
+</p><pre>do let cp = emptyCP
+   cp &lt;- add_section cp &quot;sect1&quot;
+   cp &lt;- set cp &quot;sect1&quot; &quot;opt1&quot; &quot;foo&quot;
+   cp &lt;- set cp &quot;sect2&quot; &quot;opt2&quot; &quot;bar&quot;
+   options cp &quot;sect1&quot;
+</pre><p>The return value from this is <code>Left (<code><a href="Data-ConfigFile.html#v:NoSection">NoSection</a></code> &quot;sect2&quot;, &quot;set&quot;)</code>.  The
+second call to <code><a href="Data-ConfigFile.html#v:set">set</a></code> failed, so the final call was skipped, and the result
+of the entire computation was considered to be an error.
+</p><p>You can combine this with the non-monadic style to get a final, pure value
+out of it:
+</p><pre>forceEither $ do let cp = emptyCP
+                 cp &lt;- add_section cp &quot;sect1&quot;
+                 cp &lt;- set cp &quot;sect1&quot; &quot;opt1&quot; &quot;foo&quot;
+                 cp &lt;- set cp &quot;sect1&quot; &quot;opt2&quot; &quot;bar&quot;
+                 options cp &quot;sect1&quot;
+</pre><p>This returns <code>[&quot;opt1&quot;, &quot;opt2&quot;]</code>.  A quite normal value.
+</p></div><h2 id="g:12">Combined Error/IO Monad Usage
+</h2><div class="doc"><p>You've seen a nice way to use this module in the Error monad and get an Either
+value out.  But that's the Error monad, so IO is not permitted.
+Using Haskell's monad transformers, you can run it in the combined
+Error/IO monad.  That is, you will get an IO result back.  Here is a full
+standalone example of doing that:
+</p><pre>import Data.ConfigFile
+import Control.Monad.Error
+
+main = do
+          rv &lt;- runErrorT $
+              do
+              cp &lt;- join $ liftIO $ readfile empty &quot;/etc/passwd&quot;
+              let x = cp
+              liftIO $ putStrLn &quot;In the test&quot;
+              nb &lt;- get x &quot;DEFAULT&quot; &quot;nobody&quot;
+              liftIO $ putStrLn nb
+              foo &lt;- get x &quot;DEFAULT&quot; &quot;foo&quot;
+              liftIO $ putStrLn foo
+              return &quot;done&quot;
+          print rv
+</pre><p>On my system, this prints:
+</p><pre>In the test
+x:65534:65534:nobody:/nonexistent:/bin/sh
+Left (NoOption &quot;foo&quot;,&quot;get&quot;)
+</pre><p>That is, my <code>/etc/passwd</code> file contains a <code>nobody</code> user but not a <code>foo</code> user.
+</p><p>Let's look at how that works.
+</p><p>First, <code>main</code> always runs in the IO monad only, so we take the result from
+the later calls and put it in <code>rv</code>.  Note that the combined block
+is started with <code>runErrorT $ do</code> instead of just <code>do</code>.
+</p><p>To get something out of the call to <code><a href="Data-ConfigFile.html#v:readfile">readfile</a></code>, we use
+<code>join $ liftIO $ readfile</code>.  This will bring the result out of the IO monad
+into the combined monad and process it like usual.  From here on,
+everything looks normal, except for IO calls.  They are all executed under
+<code>liftIO</code> so that the result value is properly brought into the combined
+monad.  This finally returns <code>&quot;done&quot;</code>.  Since we are in the Error monad, that means that the literal value is <code>Right &quot;done&quot;</code>.  Since we are also in the IO
+monad, this is wrapped in IO.  So the final return type after applying
+<code>runErrorT</code> is <code>IO (Either CPError String)</code>.
+</p><p>In this case, there was an error, and processing stopped at that point just
+like the example of the pure Error monad.  We print out the return value,
+so you see the error displayed as a <code>Left</code> value.
+</p><p>It all works quite easily.
+</p></div><h1 id="g:13">Types
+</h1><div class="doc"><p>The code used to say this:
+</p><pre>type CPResult a = MonadError CPError m =&gt; m a
+simpleAccess :: ConfigParser -&gt; SectionSpec -&gt; OptionSpec -&gt; CPResult String
+</pre><p>But Hugs did not support that type declaration.  Therefore, types are now
+given like this:
+</p><pre>simpleAccess :: MonadError CPError m =&gt;
+                ConfigParser -&gt; SectionSpec -&gt; OptionSpec -&gt; m String
+</pre><p>Although it looks more confusing than before, it still means the same.
+The return value can still be treated as <code>Either CPError String</code> if you so
+desire.
+</p></div><div class="top"><p class="src"><span class="keyword">type</span> <a name="t:SectionSpec" class="def">SectionSpec</a> = <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></p><div class="doc"><p>Names of sections 
+</p></div></div><div class="top"><p class="src"><span class="keyword">type</span> <a name="t:OptionSpec" class="def">OptionSpec</a> = <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></p><div class="doc"><p>Names of options 
+</p></div></div><div class="top"><p class="src"><span class="keyword">data</span>  <a name="t:ConfigParser" class="def">ConfigParser</a>  </p><div class="doc"><p>This is the main record that is used by <code><a href="Data.html#t:ConfigFile">ConfigFile</a></code>.
+</p></div><div class="subs constructors"><p class="caption">Constructors</p><table><tr><td class="src"><a name="v:ConfigParser" class="def">ConfigParser</a></td><td class="doc empty">&nbsp;</td></tr><tr><td colspan="2"><div class="subs fields"><p class="caption">Fields</p><dl><dt class="src"><a name="v:content" class="def">content</a> :: <a href="Data-ConfigFile-Types.html#t:CPData">CPData</a></dt><dd class="doc"><p>The data itself
+</p></dd><dt class="src"><a name="v:optionxform" class="def">optionxform</a> :: <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a></dt><dd class="doc"><p>How to transform an option into a standard representation
+</p></dd><dt class="src"><a name="v:defaulthandler" class="def">defaulthandler</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Either.html#t:Either">Either</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></dt><dd class="doc"><p>Function to look up an option, considering a default value
+ if <code><a href="Data-ConfigFile.html#v:usedefault">usedefault</a></code> is True; or ignoring a default value otherwise.
+ The option specification is assumed to be already transformed.
+</p></dd><dt class="src"><a name="v:usedefault" class="def">usedefault</a> :: <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Bool.html#t:Bool">Bool</a></dt><dd class="doc"><p>Whether or not to seek out a default action when no match
+ is found.
+</p></dd><dt class="src"><a name="v:accessfunc" class="def">accessfunc</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Either.html#t:Either">Either</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></dt><dd class="doc"><p>Function that is used to perform lookups, do optional
+ interpolation, etc.  It is assumed that accessfunc
+ will internally call defaulthandler to do the underlying lookup.
+ The option value is not assumed to be transformed.
+</p></dd></dl><div class="clear"></div></div></td></tr></table></div></div><div class="top"><p class="src"><span class="keyword">data</span>  <a name="t:CPErrorData" class="def">CPErrorData</a>  </p><div class="doc"><p>Possible ConfigParser errors. 
+</p></div><div class="subs constructors"><p class="caption">Constructors</p><table><tr><td class="src"><a name="v:ParseError" class="def">ParseError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></td><td class="doc"><p>Parse error
+</p></td></tr><tr><td class="src"><a name="v:SectionAlreadyExists" class="def">SectionAlreadyExists</a> <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a></td><td class="doc"><p>Attempt to create an already-existing ection
+</p></td></tr><tr><td class="src"><a name="v:NoSection" class="def">NoSection</a> <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a></td><td class="doc"><p>The section does not exist
+</p></td></tr><tr><td class="src"><a name="v:NoOption" class="def">NoOption</a> <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a></td><td class="doc"><p>The option does not exist
+</p></td></tr><tr><td class="src"><a name="v:OtherProblem" class="def">OtherProblem</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></td><td class="doc"><p>Miscellaneous error
+</p></td></tr><tr><td class="src"><a name="v:InterpolationError" class="def">InterpolationError</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></td><td class="doc"><p>Raised by <code><a href="Data-ConfigFile.html#t:interpolatingAccess">interpolatingAccess</a></code> if a request was made for a non-existant option
+</p></td></tr></table></div><div class="subs instances"><p id="control.i:CPErrorData" class="caption collapser" onclick="toggleSection('i:CPErrorData')">Instances</p><div id="section.i:CPErrorData" class="show"><table><tr><td class="src"><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Eq.html#t:Eq">Eq</a> <a href="Data-ConfigFile.html#t:CPErrorData">CPErrorData</a></td><td class="doc empty">&nbsp;</td></tr><tr><td class="src"><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Ord.html#t:Ord">Ord</a> <a href="Data-ConfigFile.html#t:CPErrorData">CPErrorData</a></td><td class="doc empty">&nbsp;</td></tr><tr><td class="src"><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Text-Show.html#t:Show">Show</a> <a href="Data-ConfigFile.html#t:CPErrorData">CPErrorData</a></td><td class="doc empty">&nbsp;</td></tr><tr><td class="src"><a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:Error">Error</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a></td><td class="doc empty">&nbsp;</td></tr></table></div></div></div><div class="top"><p class="src"><span class="keyword">type</span> <a name="t:CPError" class="def">CPError</a> = (<a href="Data-ConfigFile.html#t:CPErrorData">CPErrorData</a>, <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a>)</p><div class="doc"><p>Indicates an error occurred.  The String is an explanation of the location
+of the error. 
+</p></div></div><h1 id="g:14">Initialization
+</h1><div class="top"><p class="src"><a name="v:emptyCP" class="def">emptyCP</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>The default empty <code><a href="Data.html#t:ConfigFile">ConfigFile</a></code> object.
+</p><p>The content contains only an empty mandatory <code>DEFAULT</code> section.
+</p><p><code><a href="Data-ConfigFile.html#v:optionxform">optionxform</a></code> is set to <code>map toLower</code>.
+</p><p><code><a href="Data-ConfigFile.html#v:usedefault">usedefault</a></code> is set to <code>True</code>.
+</p><p><code><a href="Data-ConfigFile.html#v:accessfunc">accessfunc</a></code> is set to <code><a href="Data-ConfigFile.html#v:simpleAccess">simpleAccess</a></code>.
+</p></div></div><h1 id="g:15">Configuring the ConfigParser
+</h1><div class="doc"><p>You may notice that the <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> object has some configurable parameters,
+such as <code><a href="Data-ConfigFile.html#v:usedefault">usedefault</a></code>.  In case you're not familiar with the Haskell syntax
+for working with these, you can use syntax like this to set these options:
+</p><pre>let cp2 = cp { usedefault = False }
+</pre><p>This will create a new <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> that is the same as <code>cp</code> except for
+the <code><a href="Data-ConfigFile.html#v:usedefault">usedefault</a></code> field, which is now always False.  The new object will be
+called <code>cp2</code> in this example.
+</p></div><h2 id="g:16">Access Functions
+</h2><div class="top"><p class="src"><a name="v:simpleAccess" class="def">simpleAccess</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></p><div class="doc"><p>Default (non-interpolating) access function 
+</p></div></div><div class="top"><p class="src"><a name="v:interpolatingAccess" class="def">interpolatingAccess</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Int.html#t:Int">Int</a> -&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></p><div class="doc"><p>Interpolating access function.  Please see the Interpolation section
+above for a background on interpolation.
+</p><p>Although the format string looks similar to one used by <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Text-Printf.html">Text.Printf</a>,
+it is not the same.  In particular, only the %(...)s format is supported.
+No width specifiers are supported and no conversions other than s are supported.
+</p><p>To use this function, you must specify a maximum recursion depth for
+interpolation.  This is used to prevent a stack overflow in the event that
+the configuration file contains an endless interpolation loop.  Values of 10
+or so are usually more than enough, though you could probably go into the
+hundreds or thousands before you have actual problems.
+</p><p>A value less than one will cause an instant error every time you attempt
+a lookup.
+</p><p>This access method can cause <code><a href="Data-ConfigFile.html#v:get">get</a></code> and friends to return a new <code><a href="Data-ConfigFile.html#t:CPError">CPError</a></code>:
+<code><a href="Data-ConfigFile.html#v:InterpolationError">InterpolationError</a></code>.  This error would be returned when:
+</p><ul><li> The configuration file makes a reference to an option that does
+   not exist
+</li><li> The maximum interpolation depth is exceeded
+</li><li> There is a syntax error processing a %-directive in the configuration
+   file
+</li></ul><p>An interpolation lookup name specifies an option only.  There is no provision
+to specify a section.  Interpolation variables are looked up in the current
+section, and, if <code><a href="Data-ConfigFile.html#v:usedefault">usedefault</a></code> is True, in <code>DEFAULT</code> according to the normal
+logic.
+</p><p>To use a literal percent sign, you must place <code>%%</code> in the configuration
+file when interpolation is used.
+</p><p>Here is how you might enable interpolation:
+</p><pre>let cp2 = cp {accessfunc = interpolatingAccess 10}
+</pre><p>The <code>cp2</code> object will now support interpolation with a maximum depth of 10.
+</p></div></div><h1 id="g:17">Reading
+</h1><div class="doc"><p>You can use these functions to read data from a file.
+</p><p>A common idiom for loading a new object from stratch is:
+</p><pre>cp &lt;- <code><a href="Data-ConfigFile.html#v:readfile">readfile</a></code> <code><a href="Data-ConfigFile.html#v:emptyCP">emptyCP</a></code> &quot;/etc/foo.cfg&quot;</pre><p>Note the use of <code><a href="Data-ConfigFile.html#v:emptyCP">emptyCP</a></code>; this will essentially cause the file's data
+to be merged with the empty <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code>.
+</p></div><div class="top"><p class="src"><a name="v:readfile" class="def">readfile</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Users/anobi/Projects/Code/Haskell/hopsu/.cabal-sandbox/share/doc/x86_64-osx-ghc-7.6.3/MissingH-1.2.0.2/html/System-IO-HVFS.html#t:FilePath">FilePath</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/System-IO.html#t:IO">IO</a> (m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a>)</p><div class="doc"><p>Loads data from the specified file.  It is then combined with the
+given <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> using the semantics documented under <code><a href="Data-ConfigFile.html#v:merge">merge</a></code> with the
+new data taking precedence over the old.  However, unlike
+<code><a href="Data-ConfigFile.html#v:merge">merge</a></code>, all the options
+as set in the old object are preserved since the on-disk representation
+does not convey those options.
+</p><p>May return an error if there is a syntax error.  May raise an exception if the file could not be accessed.
+</p></div></div><div class="top"><p class="src"><a name="v:readhandle" class="def">readhandle</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/GHC-IO-Handle.html#t:Handle">Handle</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/System-IO.html#t:IO">IO</a> (m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a>)</p><div class="doc"><p>Like <code><a href="Data-ConfigFile.html#v:readfile">readfile</a></code>, but uses an already-open handle.  You should
+use <code><a href="Data-ConfigFile.html#v:readfile">readfile</a></code> instead of this if possible, since it will be able to
+generate better error messages.
+</p><p>Errors would be returned on a syntax error.
+</p></div></div><div class="top"><p class="src"><a name="v:readstring" class="def">readstring</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>Like <code><a href="Data-ConfigFile.html#v:readfile">readfile</a></code>, but uses a string.  You should use <code><a href="Data-ConfigFile.html#v:readfile">readfile</a></code>
+instead of this if you are processing a file, since it can generate
+better error messages.
+</p><p>Errors would be returned on a syntax error.
+</p></div></div><h1 id="g:18">Accessing Data
+</h1><div class="top"><p class="src"><span class="keyword">class</span>  <a name="t:Get_C" class="def">Get_C</a> a  <span class="keyword">where</span></p><div class="doc"><p>The class representing the data types that can be returned by <a href="get.html">get</a>.
+</p></div><div class="subs methods"><p class="caption">Methods</p><p class="src"><a name="v:get" class="def">get</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m a</p><div class="doc"><p>Retrieves a string from the configuration file.
+</p><p>When used in a context where a String is expected, returns that string verbatim.
+</p><p>When used in a context where a Bool is expected, parses the string to
+a Boolean value (see logic below).
+</p><p>When used in a context where anything that is an instance of Read is expected,
+calls read to parse the item.
+</p><p>An error will be returned of no such option could be found or if it could
+not be parsed as a boolean (when returning a Bool).
+</p><p>When parsing to a Bool, strings are case-insentively converted as follows:
+</p><p>The following will produce a True value:
+</p><ul><li> 1
+</li><li> yes
+</li><li> on
+</li><li> enabled
+</li><li> true
+</li></ul><p>The following will produce a False value:
+</p><ul><li> 0
+</li><li> no
+</li><li> off
+</li><li> disabled
+</li><li> false 
+</li></ul></div></div><div class="subs instances"><p id="control.i:Get_C" class="caption collapser" onclick="toggleSection('i:Get_C')">Instances</p><div id="section.i:Get_C" class="show"><table><tr><td class="src"><a href="Data-ConfigFile.html#t:Get_C">Get_C</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Bool.html#t:Bool">Bool</a></td><td class="doc empty">&nbsp;</td></tr><tr><td class="src"><a href="Data-ConfigFile.html#t:Get_C">Get_C</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></td><td class="doc empty">&nbsp;</td></tr><tr><td class="src"><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Text-Read.html#t:Read">Read</a> t =&gt; <a href="Data-ConfigFile.html#t:Get_C">Get_C</a> t</td><td class="doc empty">&nbsp;</td></tr></table></div></div></div><div class="top"><p class="src"><a name="v:sections" class="def">sections</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; [<a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a>]</p><div class="doc"><p>Returns a list of sections in your configuration file.  Never includes
+the always-present section <code>DEFAULT</code>. 
+</p></div></div><div class="top"><p class="src"><a name="v:has_section" class="def">has_section</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Bool.html#t:Bool">Bool</a></p><div class="doc"><p>Indicates whether the given section exists.
+</p><p>No special <code>DEFAULT</code> processing is done. 
+</p></div></div><div class="top"><p class="src"><a name="v:options" class="def">options</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m [<a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a>]</p><div class="doc"><p>Returns a list of the names of all the options present in the
+given section.
+</p><p>Returns an error if the given section does not exist.
+</p></div></div><div class="top"><p class="src"><a name="v:has_option" class="def">has_option</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Bool.html#t:Bool">Bool</a></p><div class="doc"><p>Indicates whether the given option is present.  Returns True
+only if the given section is present AND the given option is present
+in that section.  No special <code>DEFAULT</code> processing is done.  No
+exception could be raised or error returned.
+</p></div></div><div class="top"><p class="src"><a name="v:items" class="def">items</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m [(<a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a>, <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a>)]</p><div class="doc"><p>Returns a list of <code>(optionname, value)</code> pairs representing the content
+of the given section.  Returns an error the section is invalid. 
+</p></div></div><h1 id="g:19">Modifying Data
+</h1><div class="top"><p class="src"><a name="v:set" class="def">set</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>Sets the option to a new value, replacing an existing one if it exists.
+</p><p>Returns an error if the section does not exist. 
+</p></div></div><div class="top"><p class="src"><a name="v:setshow" class="def">setshow</a> :: (<a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Text-Show.html#t:Show">Show</a> a, <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m) =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; a -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>Sets the option to a new value, replacing an existing one if it exists.
+It requires only a showable value as its parameter.
+This can be used with bool values, as well as numeric ones.
+</p><p>Returns an error if the section does not exist. 
+</p></div></div><div class="top"><p class="src"><a name="v:remove_option" class="def">remove_option</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; <a href="Data-ConfigFile.html#t:OptionSpec">OptionSpec</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>Removes the specified option.  Returns a <code><a href="Data-ConfigFile.html#v:NoSection">NoSection</a></code> error if the
+section does not exist and a <code><a href="Data-ConfigFile.html#v:NoOption">NoOption</a></code> error if the option does not
+exist.  Otherwise, returns the new <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> object.
+</p></div></div><div class="top"><p class="src"><a name="v:add_section" class="def">add_section</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>Adds the specified section name.  Returns a
+<code><a href="Data-ConfigFile.html#v:SectionAlreadyExists">SectionAlreadyExists</a></code> error if the
+section was already present.  Otherwise, returns the new
+<code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> object.
+</p></div></div><div class="top"><p class="src"><a name="v:remove_section" class="def">remove_section</a> :: <a href="file:///Library/Haskell/ghc-7.6.3/lib/mtl-2.1.2/doc/html/Control-Monad-Error-Class.html#t:MonadError">MonadError</a> <a href="Data-ConfigFile.html#t:CPError">CPError</a> m =&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:SectionSpec">SectionSpec</a> -&gt; m <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>Removes the specified section.  Returns a <code><a href="Data-ConfigFile.html#v:NoSection">NoSection</a></code> error if
+the section does not exist; otherwise, returns the new <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code>
+object.
+</p><p>This call may not be used to remove the <code>DEFAULT</code> section.  Attempting to do
+so will always cause a <code><a href="Data-ConfigFile.html#v:NoSection">NoSection</a></code> error.
+</p></div></div><div class="top"><p class="src"><a name="v:merge" class="def">merge</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></p><div class="doc"><p>Combines two <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code>s into one.
+</p><p>Any duplicate options are resolved to contain the value specified in
+the second parser.
+</p><p>The <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> options in the resulting object will be set as they
+are in the second one passed to this function. 
+</p></div></div><h1 id="g:20">Output Data
+</h1><div class="top"><p class="src"><a name="v:to_string" class="def">to_string</a> :: <a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></p><div class="doc"><p>Converts the <code><a href="Data-ConfigFile.html#t:ConfigParser">ConfigParser</a></code> to a string representation that could be
+later re-parsed by this module or modified by a human.
+</p><p>Note that this does not necessarily re-create a file that was originally
+loaded.  Things may occur in a different order, comments will be removed,
+etc.  The conversion makes an effort to make the result human-editable,
+but it does not make an effort to make the result identical to the original
+input.
+</p><p>The result is, however, guaranteed to parse the same as the original input.
+</p></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.13.2</p></div></body></html>

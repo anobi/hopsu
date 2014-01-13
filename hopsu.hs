@@ -1,3 +1,5 @@
+module Hopsu.Bot where
+
 import Network
 import System.IO
 import System.Exit
@@ -12,6 +14,8 @@ import Control.Exception
 import Control.Monad.Error
 import Prelude hiding (catch)
 
+import Hopsu.Db
+
 data Bot = Bot {starttime :: ClockTime, socket :: Handle, config :: Config}
 data Config = Config {server :: String, port :: Int, nick :: String, chan :: String, pass :: String} deriving (Read, Show)
 type Net = ReaderT Bot IO
@@ -19,13 +23,6 @@ type Net = ReaderT Bot IO
 --
 -- engine part, under the hood etc
 --
-
--- main program, init & start the loop
-main :: IO ()
-main = bracket connect disconnect loop
-    where
-        disconnect  = hClose . socket
-        loop st     = catch (runReaderT run st) (\(SomeException _) -> return ())
 
 -- open the connection and fire up the bot
 connect :: IO Bot
@@ -112,9 +109,10 @@ readConfig f = do
 -- handle and obey the master's orders
 eval :: String -> Net ()
 eval x | "!id " `isPrefixOf` x = privmsg (drop 4 x)
-eval "!uptime" = uptime >>= privmsg
-eval "!quit"  = write "QUIT" ":!ulos" >> io (exitWith ExitSuccess)
-eval _        = return ()
+eval "!uptime"  = uptime >>= privmsg
+eval "!url"     = url >>= privmsg
+eval "!quit"    = write "QUIT" ":!ulos" >> io (exitWith ExitSuccess)
+eval _          = return ()
 
 -- tell the uptime
 uptime :: Net String
@@ -122,6 +120,12 @@ uptime = do
     now <- io getClockTime
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
+
+url :: Net String
+url x =
+    privmsg link
+    where
+        link = getUrl x
 
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
@@ -144,3 +148,7 @@ pretty td =
           metrics = [(86400,"d"),(3600,"h"),(60,"m"),(1,"s")]
           diffs = filter((/= 0) . fst) $ reverse $ snd $ 
                   foldl' merge (tdSec td,[]) metrics
+
+getUrl :: String -> String
+getUrl x = do
+    asd

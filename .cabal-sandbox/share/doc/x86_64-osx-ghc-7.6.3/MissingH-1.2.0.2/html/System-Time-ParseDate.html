@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>System.Time.ParseDate</title><link href="ocean.css" rel="stylesheet" type="text/css" title="Ocean" /><script src="haddock-util.js" type="text/javascript"></script><script type="text/javascript">//<![CDATA[
+window.onload = function () {pageLoad();setSynopsis("mini_System-Time-ParseDate.html");};
+//]]>
+</script></head><body><div id="package-header"><ul class="links" id="page-menu"><li><a href="index.html">Contents</a></li><li><a href="doc-index.html">Index</a></li></ul><p class="caption">MissingH-1.2.0.2: Large utility library</p></div><div id="content"><div id="module-header"><table class="info"><tr><th>Portability</th><td>portable</td></tr><tr><th>Stability</th><td>provisional</td></tr><tr><th>Maintainer</th><td>Bj&#246;rn Bringert</td></tr><tr><th>Safe Haskell</th><td>None</td></tr></table><p class="caption">System.Time.ParseDate</p></div><div id="description"><p class="caption">Description</p><div class="doc"><p>Utility for parsing dates.
+</p></div></div><div id="synopsis"><p id="control.syn" class="caption expander" onclick="toggleSection('syn')">Synopsis</p><ul id="section.syn" class="hide" onclick="toggleSection('syn')"><li class="src short"><a href="#v:parseCalendarTime">parseCalendarTime</a> :: <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/old-locale-1.0.0.5/System-Locale.html#t:TimeLocale">TimeLocale</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a> -&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Maybe.html#t:Maybe">Maybe</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/old-time-1.1.0.1/System-Time.html#t:CalendarTime">CalendarTime</a></li></ul></div><div id="interface"><h1>Documentation</h1><div class="top"><p class="src"><a name="v:parseCalendarTime" class="def">parseCalendarTime</a></p><div class="subs arguments"><p class="caption">Arguments</p><table><tr><td class="src">:: <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/old-locale-1.0.0.5/System-Locale.html#t:TimeLocale">TimeLocale</a></td><td class="doc"><p>Time locale
+</p></td></tr><tr><td class="src">-&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></td><td class="doc"><p>Date format
+</p></td></tr><tr><td class="src">-&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-String.html#t:String">String</a></td><td class="doc"><p>String to parse
+</p></td></tr><tr><td class="src">-&gt; <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Maybe.html#t:Maybe">Maybe</a> <a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/old-time-1.1.0.1/System-Time.html#t:CalendarTime">CalendarTime</a></td><td class="doc"><p><code><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/base-4.6.0.1/Data-Maybe.html#v:Nothing">Nothing</a></code> if parsing failed.
+</p></td></tr></table></div><div class="doc"><p>Parse a date string as formatted by <code><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/old-time-1.1.0.1/System-Time.html#v:formatCalendarTime">formatCalendarTime</a></code>.
+</p><p>The resulting <code><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/old-time-1.1.0.1/System-Time.html#t:CalendarTime">CalendarTime</a></code> will only have those fields set that
+   are represented by a format specifier in the format string, and those
+   fields will be set to the values given in the date string.
+   If the same field is specified multiple times, the rightmost
+   occurence takes precedence.
+</p><p>The resulting date is not neccessarily a valid date. For example,
+   if there is no day of the week specifier in the format string,
+   the value of <code><a href="file:///Library/Frameworks/GHC.framework/Versions/7.6.3-x86_64/usr/share/doc/ghc/html/libraries/old-time-1.1.0.1/System-Time.html#v:ctWDay">ctWDay</a></code> will most likely be invalid.
+</p><p>Format specifiers are % followed by some character. All other
+   characters are treated literally. Whitespace in the format string
+   matches zero or more arbitrary whitespace characters.
+</p><p>Format specifiers marked with * are matched, but do not set any
+   field in the output.
+</p><p>Some of the format specifiers are marked as space-padded or
+   zero-padded. Regardless of this, space-padded, zero-padded
+   or unpadded inputs are accepted. Note that strings using
+   unpadded fields without separating the fields may cause
+   strange parsing.
+</p><p>Supported format specfiers:
+</p><dl><dt>%%</dt><dd>   a % character.
+</dd><dt>%a</dt><dd>   locale's abbreviated weekday name (Sun ... Sat)
+</dd><dt>%A</dt><dd>   locale's full weekday name (Sunday .. Saturday)
+</dd><dt>%b</dt><dd>   locale's abbreviated month name (Jan..Dec)
+</dd><dt>%B</dt><dd>   locale's full month name (January..December)
+</dd><dt>%c</dt><dd>   locale's date and time format (Thu Mar 25 17:47:03 CET 2004)
+</dd><dt>%C</dt><dd>   century [00-99]
+</dd><dt>%d</dt><dd>   day of month, zero padded (01..31)
+</dd><dt>%D</dt><dd>   date (%m/%d/%y)
+</dd><dt>%e</dt><dd>   day of month, space padded ( 1..31)
+</dd><dt>%h</dt><dd>   same as %b
+</dd><dt>%H</dt><dd>   hour, 24-hour clock, zero padded (00..23)
+</dd><dt>%I</dt><dd>   hour, 12-hour clock, zero padded (01..12)
+</dd><dt>%j</dt><dd>   day of the year, zero padded (001..366)
+</dd><dt>%k</dt><dd>   hour, 24-hour clock, space padded ( 0..23)
+</dd><dt>%l</dt><dd>   hour, 12-hour clock, space padded ( 1..12)
+</dd><dt>%m</dt><dd>   month, zero padded (01..12)
+</dd><dt>%M</dt><dd>   minute, zero padded (00..59)
+</dd><dt>%n</dt><dd>   a newline character
+</dd><dt>%p</dt><dd>   locale's AM or PM indicator
+</dd><dt>%r</dt><dd>   locale's 12-hour time format (hh:mm:ss AM/PM)
+</dd><dt>%R</dt><dd>   hours and minutes, 24-hour clock (hh:mm)
+</dd><dt>%s</dt><dd>   * seconds since '00:00:00 1970-01-01 UTC'
+</dd><dt>%S</dt><dd>   seconds, zero padded (00..59)
+</dd><dt>%t</dt><dd>   a horizontal tab character
+</dd><dt>%T</dt><dd>   time, 24-hour clock (hh:mm:ss)
+</dd><dt>%u</dt><dd>   numeric day of the week (1=Monday, 7=Sunday)
+</dd><dt>%U</dt><dd>   * week number, weeks starting on Sunday, zero padded (01-53)
+</dd><dt>%V</dt><dd>   * week number (as per ISO-8601),
+             week 1 is the first week with a Thursday,
+             zero padded, (01-53)
+</dd><dt>%w</dt><dd>   numeric day of the week, (0=Sunday, 6=Monday)
+</dd><dt>%W</dt><dd>   * week number, weeks starting on Monday, zero padded (01-53)
+</dd><dt>%x</dt><dd>   locale's preferred way of printing dates (%m/%d/%y)
+</dd><dt>%X</dt><dd>   locale's preferred way of printing time. (%H:%M:%S)
+</dd><dt>%y</dt><dd>   year, within century, zero padded (00..99)
+</dd><dt>%Y</dt><dd>   year, including century. Not padded
+           (this is probably a bug, but formatCalendarTime does
+           it this way). (0-9999)
+</dd><dt>%Z</dt><dd>   time zone abbreviation (e.g. CET) or RFC-822 style numeric
+           timezone (-0500) 
+</dd></dl></div></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.13.2</p></div></body></html>

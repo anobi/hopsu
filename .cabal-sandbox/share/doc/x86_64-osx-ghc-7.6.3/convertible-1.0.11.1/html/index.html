@@ -1,0 +1,20 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>convertible-1.0.11.1: Typeclasses and instances for converting between types</title><link href="ocean.css" rel="stylesheet" type="text/css" title="Ocean" /><script src="haddock-util.js" type="text/javascript"></script><script type="text/javascript">//<![CDATA[
+window.onload = function () {pageLoad();};
+//]]>
+</script></head><body><div id="package-header"><ul class="links" id="page-menu"><li><a href="index.html">Contents</a></li><li><a href="doc-index.html">Index</a></li></ul><p class="caption">convertible-1.0.11.1: Typeclasses and instances for converting between types</p></div><div id="content"><div id="description"><h1>convertible-1.0.11.1: Typeclasses and instances for converting between types</h1><div class="doc"><p>convertible provides a typeclass with a single function
+that is designed to help convert between different types: numeric
+values, dates and times, and the like.  The conversions perform bounds
+checking and return a pure Either value.  This means that you need
+not remember which specific function performs the conversion you
+desire.
+</p><p>Also included in the package are optional instances that provide
+conversion for various numeric and time types, as well as utilities
+for writing your own instances.
+</p><p>Finally, there is a function that will raise an exception on
+bounds-checking violation, or return a bare value otherwise,
+implemented in terms of the safer function described above.
+</p><p>Convertible is also used by HDBC 2.0 for handling marshalling of
+data to and from databases.
+</p><p>Convertible is backed by an extensive test suite and passes tests
+on GHC and Hugs.
+</p></div></div><div id="module-list"><p class="caption">Modules</p><ul><li><span id="control.n.1" class="module collapser" onclick="toggleSection('n.1')">Data</span><ul id="section.n.1" class="show"><li><span class="module"><span id="control.n.1.1" class="collapser" onclick="toggleSection('n.1.1')">&nbsp;</span><a href="Data-Convertible.html">Data.Convertible</a></span><ul id="section.n.1.1" class="show"><li><span class="module"><a href="Data-Convertible-Base.html">Data.Convertible.Base</a></span></li><li><span class="module"><span id="control.n.1.1.2" class="collapser" onclick="toggleSection('n.1.1.2')">&nbsp;</span><a href="Data-Convertible-Instances.html">Data.Convertible.Instances</a></span><ul id="section.n.1.1.2" class="show"><li><span class="module"><a href="Data-Convertible-Instances-C.html">Data.Convertible.Instances.C</a></span></li><li><span class="module"><a href="Data-Convertible-Instances-Map.html">Data.Convertible.Instances.Map</a></span></li><li><span class="module"><a href="Data-Convertible-Instances-Num.html">Data.Convertible.Instances.Num</a></span></li><li><span class="module"><a href="Data-Convertible-Instances-Text.html">Data.Convertible.Instances.Text</a></span></li><li><span class="module"><a href="Data-Convertible-Instances-Time.html">Data.Convertible.Instances.Time</a></span></li></ul></li><li><span class="module"><a href="Data-Convertible-Utils.html">Data.Convertible.Utils</a></span></li></ul></li></ul></li></ul></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.13.2</p></div></body></html>
