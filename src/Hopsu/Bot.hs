@@ -7,7 +7,6 @@ import System.Time
 import System.Directory
 import Text.Printf
 import Data.List
-import Data.ConfigFile
 import Control.Arrow
 import Control.Monad.Reader
 import Control.Exception
@@ -15,15 +14,15 @@ import Control.Monad.Error
 import Prelude hiding (catch)
 
 import Hopsu.Db
+import Hopsu.Config
+--import Hopsu.Handler
 
 data Bot = Bot {starttime :: ClockTime, socket :: Handle, config :: Config, db :: Db}
-data Config = Config {server :: String, port :: Int, nick :: String, chan :: String, pass :: String} deriving (Read, Show)
 type Net = ReaderT Bot IO
 
 --
 -- engine part, under the hood etc
 --
-
 
 hopsu :: IO ()
 hopsu = bracket connect disconnect loop
@@ -35,7 +34,7 @@ hopsu = bracket connect disconnect loop
 connect :: IO Bot
 connect = do
     d <- getHomeDirectory
-    c <- readConfig (d ++ "/.hopsu/hopsurc.config") 
+    c <- readConfig (d ++ "/.hopsu/hopsu.config") 
     t <- getClockTime
     db <- runDb (d ++ "/.hopsu/hopsu.db")
     h <- connectTo (server c) (PortNumber (fromIntegral (port c)))
@@ -83,37 +82,6 @@ privmsg s = do
     c <- asks config
     write "PRIVMSG" ((chan c) ++ " :" ++ s) 
 
--- misc stuff
-io :: IO a -> Net a
-io = liftIO
-
--- read the config file
-readConfig :: String -> IO Config
-readConfig f = do
-    rv <- runErrorT $ do
-        cp <- join $ liftIO $ readfile emptyCP f
-        let x = cp
-
-        -- todo redo, horrible
-        s <- get x "Connection" "server"
-        p <- get x "Connection" "port"
-        n <- get x "Connection" "nick"
-        c <- get x "Connection" "chan"
-        ps <- get x "Connection" "pass"
-
-        return (Config { server = s
-                        ,port = p
-                        ,nick = n
-                        ,chan = c
-                        ,pass = ps
-                        })
-
-    either (\x -> error (snd x)) (\x -> return x) rv
-
---
--- here be the functionality, the good stuff
---
-
 -- handle and obey the master's orders
 eval :: String -> Net ()
 eval x | "!id " `isPrefixOf` x = privmsg (drop 4 x)
@@ -142,6 +110,10 @@ greet x =
     where
         nick = takeWhile (/= '!') x
         greet = "loool"
+
+-- misc stuff
+io :: IO a -> Net a
+io = liftIO
 
 --
 -- housekeeping stuff
