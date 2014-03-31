@@ -117,7 +117,7 @@ readConfig f = do
 -- handle and obey the master's orders
 eval :: String -> Net ()
 eval x | "!id " `isPrefixOf` x = privmsg (drop 4 x)
-eval x | "!url" `isPrefixOf` x = geturl x
+eval x | "!url" `isPrefixOf` x = url x
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> io (exitWith ExitSuccess)
 eval _          = return ()
@@ -129,11 +129,11 @@ uptime = do
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
 
-geturl :: String -> Net ()
-geturl x =
-    privmsg link
-    where
-        link = "lolz"
+url :: String -> Net ()
+url s = do
+    c <- asks connection
+    link <- geturl c s
+    privmsg $ "" ++ link
 
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
