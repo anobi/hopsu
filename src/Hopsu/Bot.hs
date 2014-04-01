@@ -5,6 +5,8 @@ import System.IO
 import System.Exit
 import System.Time
 import System.Directory
+import Database.HDBC
+import Database.HDBC.Sqlite3
 import Text.Printf
 import Data.List
 import Control.Arrow
@@ -17,7 +19,7 @@ import Hopsu.Db
 import Hopsu.Config
 --import Hopsu.Handler
 
-data Bot = Bot {starttime :: ClockTime, socket :: Handle, config :: Config, db :: Db}
+data Bot = Bot {starttime :: ClockTime, socket :: Handle, config :: Config, db :: Connection}
 type Net = ReaderT Bot IO
 
 --
@@ -36,7 +38,7 @@ connect = do
     d <- getHomeDirectory
     c <- readConfig (d ++ "/.hopsu/hopsu.config") 
     t <- getClockTime
-    db <- runDb (d ++ "/.hopsu/hopsu.db")
+    db <- connectSqlite3 (d ++ "/.hopsu/hopsu.db")
     h <- connectTo (server c) (PortNumber (fromIntegral (port c)))
     hSetBuffering h NoBuffering
     return (Bot t h c db)
@@ -100,8 +102,8 @@ uptime = do
 url :: String -> Net ()
 url s = do
     c <- asks connection
-    link <- geturl c s
-    privmsg $ "" ++ link
+    link <- liftIO $ geturl c s
+    privmsg $ "" ++ show link
 
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
