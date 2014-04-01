@@ -30,7 +30,7 @@ hopsu :: IO ()
 hopsu = bracket connect disconnect loop
     where
         disconnect  = hClose . socket
-        loop st     = catch (runReaderT run st) (\(SomeException _) -> return ())
+        loop st     = catch (runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
 
 -- open the connection and fire up the bot
 connect :: IO Bot
@@ -101,9 +101,9 @@ uptime = do
 
 url :: String -> Net ()
 url s = do
-    c <- asks connection
+    c <- asks db
     link <- liftIO $ geturl c s
-    privmsg $ "" ++ show link
+    privmsg $ show link
 
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
