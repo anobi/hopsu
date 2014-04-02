@@ -7,5 +7,5 @@ geturl :: Connection -> String -> IO String
 geturl c s = handleSqlError $ do  
     q <- quickQuery' c "SELECT * FROM urls" []
     case q of
-        ([id,n,url]:_) -> return $ fromSql n ++ " > " ++ fromSql url
-        _ -> return ""
+        ([id,n,url]:_) -> return $ fromSql url
+        _ -> return "No."

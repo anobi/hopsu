@@ -30,44 +30,44 @@ hopsu :: IO ()
 hopsu = bracket connect disconnect loop
     where
         disconnect  = hClose . socket
-        loop st     = catch (runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
+        loop st     = catch ( runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
 
 -- open the connection and fire up the bot
 connect :: IO Bot
 connect = do
     d <- getHomeDirectory
-    c <- readConfig (d ++ "/.hopsu/hopsu.config") 
+    c <- readConfig $ d ++ "/.hopsu/hopsu.config"
     t <- getClockTime
-    db <- connectSqlite3 (d ++ "/.hopsu/hopsu.db")
+    db <- connectSqlite3 $ d ++ "/.hopsu/hopsu.db"
     h <- connectTo (server c) (PortNumber (fromIntegral (port c)))
     hSetBuffering h NoBuffering
-    return (Bot t h c db)
+    return $ Bot t h c db
 
 -- connect to irc server, join a channel and start listening
 run :: Net ()
 run = do
     c <- asks config
-    write "NICK" (nick c)
-    write "USER" ((nick c) ++ " 0 * :hopperbot")
-    write "JOIN" ((chan c) ++ " " ++ (pass c))
+    write "NICK" $ nick c
+    write "USER" $ nick c ++ " 0 * :hopperbot"
+    write "JOIN" $ chan c ++ " " ++ pass c
     asks socket >>= listen
 
 -- listen and respond to stuff from irck
 listen :: Handle -> Net ()
 listen h = forever $ do
-    s <- init `fmap` io (hGetLine h)
-    io (putStrLn s)
+    s <- init `fmap` liftIO (hGetLine h)
+    liftIO $ putStrLn s
 
     -- react to irc happenings (not user commands)
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
     else if join s then hello s
-    else eval (clean s)
+    else eval $ clean s
     where
         forever a   = a >> forever a
         clean       = drop 1 . dropWhile (/= ':') . drop 1
         ping x      = "PING :" `isPrefixOf` x
-        pong x      = write "PONG" (':' : drop 6 x)
+        pong x      = write "PONG" $ ':' : drop 6 x
         join x      = "JOIN" `isInfixOf` x
         hello x     = greet $ drop 1 x --drop the leading :
 
@@ -75,27 +75,27 @@ listen h = forever $ do
 write :: String -> String -> Net()
 write s t = do
     h <- asks socket
-    io $ hPrintf h   "%s %s\r\n" s t
-    io $ printf      "> %s %s\n" s t
+    liftIO $ hPrintf h   "%s %s\r\n" s t
+    liftIO $ printf      "> %s %s\n" s t
 
 -- say something to some(one/where)
 privmsg :: String -> Net ()
 privmsg s = do
     c <- asks config
-    write "PRIVMSG" ((chan c) ++ " :" ++ s) 
+    write "PRIVMSG" $ chan c ++ " :" ++ s
 
 -- handle and obey the master's orders
 eval :: String -> Net ()
-eval x | "!id " `isPrefixOf` x = privmsg (drop 4 x)
+eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
 eval x | "!url" `isPrefixOf` x = url x
 eval "!uptime"  = uptime >>= privmsg
-eval "!quit"    = write "QUIT" ":!ulos" >> io (exitWith ExitSuccess)
+eval "!quit"    = write "QUIT" ":!ulos" >> liftIO (exitWith ExitSuccess)
 eval _          = return ()
 
 -- tell the uptime
 uptime :: Net String
 uptime = do
-    now <- io getClockTime
+    now <- liftIO getClockTime
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
 
@@ -108,14 +108,10 @@ url s = do
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
 greet x =
-    privmsg ("Hei " ++ nick ++ ", " ++ greet)
+    privmsg $ "Eyh " ++ nick ++ ", " ++ greet
     where
         nick = takeWhile (/= '!') x
         greet = "loool"
-
--- misc stuff
-io :: IO a -> Net a
-io = liftIO
 
 --
 -- housekeeping stuff
