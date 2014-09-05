@@ -87,7 +87,7 @@ privmsg s = do
 -- handle and obey the master's orders
 eval :: String -> Net ()
 eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
-eval x | "!url" `isPrefixOf` x = url x
+eval x | "!url " `isPrefixOf` x = url $ drop 5 x
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO (exitWith ExitSuccess)
 eval _          = return ()
@@ -103,7 +103,7 @@ url :: String -> Net ()
 url s = do
     c <- asks db
     link <- liftIO $ geturl c s
-    privmsg $ show link
+    privmsg $ link
 
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
