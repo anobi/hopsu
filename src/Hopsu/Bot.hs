@@ -48,6 +48,7 @@ connect = do
     db <- connectSqlite3 $ d ++ "/.hopsu/hopsu.db"
     h <- connectTo (server c) (PortNumber (fromIntegral (port c)))
     hSetBuffering h NoBuffering
+    hSetEncoding h utf8
     return $ Bot t h c db
 
 -- connect to irc server, join a channel and start listening
@@ -95,7 +96,7 @@ privmsg s = do
 eval :: String -> Net ()
 eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
 eval x | "!url " `isPrefixOf` x = url $ drop 5 x
-eval x | "!saeae " `isPrefixOf` x = weather' $ drop 7 x
+eval x | "!sää " `isPrefixOf` x = weather' $ drop 5 x
 --eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
 
 eval "!uptime"  = uptime >>= privmsg
