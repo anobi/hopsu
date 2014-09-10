@@ -7,7 +7,6 @@ import System.Exit
 import System.Time
 import System.Directory
 
-import Database.HDBC
 import Database.HDBC.Sqlite3
 
 import Text.Printf
@@ -18,9 +17,8 @@ import Data.Maybe
 import Control.Arrow
 import Control.Monad.Reader
 import Control.Exception
-import Control.Monad.Error
 
-import Prelude hiding (catch)
+import Prelude
 
 import Hopsu.Db
 import Hopsu.Config
@@ -34,10 +32,10 @@ type Net = ReaderT Bot IO
 --
 
 hopsu :: IO ()
-hopsu = bracket connect disconnect loop
+hopsu = bracket connect dc botloop
     where
-        disconnect  = hClose . socket
-        loop st     = catch ( runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
+        dc          = hClose . socket
+        botloop st  = catch ( runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
 
 -- open the connection and fire up the bot
 connect :: IO Bot
@@ -45,11 +43,11 @@ connect = do
     d <- getHomeDirectory
     c <- readConfig $ d ++ "/.hopsu/hopsu.config"
     t <- getClockTime
-    db <- connectSqlite3 $ d ++ "/.hopsu/hopsu.db"
+    dbconn <- connectSqlite3 $ d ++ "/.hopsu/hopsu.db"
     h <- connectTo (server c) (PortNumber (fromIntegral (port c)))
     hSetBuffering h NoBuffering
     hSetEncoding h utf8
-    return $ Bot t h c db
+    return $ Bot t h c dbconn
 
 -- connect to irc server, join a channel and start listening
 run :: Net ()
@@ -62,21 +60,21 @@ run = do
 
 -- listen and respond to stuff from irck
 listen :: Handle -> Net ()
-listen h = forever $ do
+listen h = go $ do
     s <- init `fmap` liftIO (hGetLine h)
     liftIO $ putStrLn s
 
     -- react to irc happenings (not user commands)
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
-    else if join s then hello s
+    else if userjoin s then hello s
     else eval $ clean s
     where
-        forever a   = a >> forever a
+        go a   = a >> go a
         clean       = drop 1 . dropWhile (/= ':') . drop 1
         ping x      = "PING :" `isPrefixOf` x
         pong x      = write "PONG" $ ':' : drop 6 x
-        join x      = "JOIN" `isInfixOf` x
+        userjoin x  = "JOIN" `isInfixOf` x
         hello x     = greet $ drop 1 x --drop the leading :
 
 -- send stuff to irck
@@ -125,10 +123,10 @@ newurl s = do
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
 greet x =
-    privmsg $ "Eyh " ++ nick ++ ", " ++ greet
+    privmsg $ "Eyh " ++ guy ++ ", " ++ greeting
     where
-        nick = takeWhile (/= '!') x
-        greet = "loool"
+        guy = takeWhile (/= '!') x
+        greeting = "loool"
 
 weather' :: String -> Net ()
 weather' city = do
