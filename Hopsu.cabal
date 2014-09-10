@@ -18,16 +18,20 @@ cabal-version:       >=1.10
 
 executable Hopsu
   main-is:             Main.hs
+  GHC-options:         -Wall
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.5, 
                        network >=2.4, 
+                       text >=1.1,
                        old-time >=1.1, 
                        directory >=1.2, 
                        ConfigFile >=1.1, 
                        HDBC >=2.3,
                        HDBC-sqlite3, 
                        mtl >=2.1,
-                       utf8-string >=0.3.7
+                       utf8-string >=0.3.7,
+                       aeson >= 0.1,
+                       http-conduit >= 1.0
   hs-source-dirs:      src
   default-language:    Haskell2010

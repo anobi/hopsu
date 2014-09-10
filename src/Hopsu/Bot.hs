@@ -1,23 +1,30 @@
 module Hopsu.Bot where
 
 import Network
+
 import System.IO
 import System.Exit
 import System.Time
 import System.Directory
+
 import Database.HDBC
 import Database.HDBC.Sqlite3
+
 import Text.Printf
+
 import Data.List
+import Data.Maybe
+
 import Control.Arrow
 import Control.Monad.Reader
 import Control.Exception
 import Control.Monad.Error
+
 import Prelude hiding (catch)
 
 import Hopsu.Db
 import Hopsu.Config
---import Hopsu.Handler
+import Hopsu.Heather
 
 data Bot = Bot {starttime :: ClockTime, socket :: Handle, config :: Config, db :: Connection}
 type Net = ReaderT Bot IO
@@ -88,6 +95,9 @@ privmsg s = do
 eval :: String -> Net ()
 eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
 eval x | "!url " `isPrefixOf` x = url $ drop 5 x
+eval x | "!saeae " `isPrefixOf` x = weather' $ drop 7 x
+--eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
+
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO (exitWith ExitSuccess)
 eval _          = return ()
@@ -105,6 +115,12 @@ url s = do
     link <- liftIO $ geturl c s
     privmsg $ link
 
+newurl :: String -> Net ()
+newurl s = do
+    c <- asks db
+    u <- liftIO $ addurl c (words s)
+    privmsg $ u
+
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
 greet x =
@@ -113,9 +129,20 @@ greet x =
         nick = takeWhile (/= '!') x
         greet = "loool"
 
+weather' :: String -> Net ()
+weather' city = do
+    w <- liftIO $ getWeather city
+    case w of
+        Just (Weather {}) -> privmsg $ tellWeather $ fromJust w
+        _ -> privmsg $ "juuh en tiärä..."
+
 --
 -- housekeeping stuff
 --
+
+tellWeather :: Weather -> String
+tellWeather w =
+    "Elikkäs " ++ description w ++ ", lämpöä " ++ show (temp w) ++ " astetta ja tuuleepi " ++ show (wSpeed w) ++ " m/s suunnasta " ++ show (wDeg w)
 
 pretty :: TimeDiff -> String
 pretty td =
