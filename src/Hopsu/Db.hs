@@ -11,8 +11,8 @@ geturl c s = handleSqlError $ do
         [[SqlByteString url]] -> return $ BS.toString url
         _ -> return ""
 
-addurl :: Connection -> [String] -> IO String
-addurl c s = handleSqlError $ do  
-    _ <- quickQuery c "INSERT INTO url (alias, url) VALUES (?, ?);" [toSql (s !! 0), toSql (s !! 1)]
+addurl :: Connection -> String -> String -> IO String
+addurl c a u = do  
+    _ <- quickQuery c "INSERT INTO urls (alias, url) VALUES (?, ?);" [toSql a, toSql u]
     commit c
     return "ju"

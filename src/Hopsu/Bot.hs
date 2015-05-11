@@ -13,10 +13,11 @@ import Text.Printf
 
 import Data.List
 import Data.Maybe
+import Data.String as S
 
 import Control.Arrow
 import Control.Monad.Reader
-import Control.Exception
+import Control.Exception as EX
 
 import Prelude
 
@@ -35,7 +36,7 @@ hopsu :: IO ()
 hopsu = bracket connect dc botloop
     where
         dc          = hClose . socket
-        botloop st  = catch ( runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
+        botloop st  = EX.catch ( runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
 
 -- open the connection and fire up the bot
 connect :: IO Bot
@@ -95,7 +96,7 @@ eval :: String -> Net ()
 eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
 eval x | "!url " `isPrefixOf` x = url $ drop 5 x
 eval x | "!sää " `isPrefixOf` x = weather' $ drop 5 x
---eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
+eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
 
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO (exitWith ExitSuccess)
@@ -112,13 +113,17 @@ url :: String -> Net ()
 url s = do
     c <- asks db
     link <- liftIO $ geturl c s
-    privmsg $ link
+    privmsg link
 
 newurl :: String -> Net ()
 newurl s = do
     c <- asks db
-    u <- liftIO $ addurl c (words s)
-    privmsg $ u
+    strs <- liftIO $ splittan s
+    result <- liftIO $ addurl c (head strs) (strs !! 1)
+    privmsg result
+
+splittan :: String -> IO [String]
+splittan s = return (words s)
 
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
@@ -133,7 +138,7 @@ weather' city = do
     w <- liftIO $ getWeather city
     case w of
         Just (Weather {}) -> privmsg $ tellWeather $ fromJust w
-        _ -> privmsg $ "juuh en tiärä..."
+        _ -> privmsg "juuh en tiärä..."
 
 --
 -- housekeeping stuff
