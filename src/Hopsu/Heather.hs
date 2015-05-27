@@ -5,7 +5,9 @@ module Hopsu.Heather where
 import Data.Aeson 
 import Control.Applicative
 import Control.Monad
+import Control.Exception
 import Network.HTTP.Conduit
+import qualified Data.ByteString.Lazy as BS
 
 data Weather = Weather { 
     weather         :: String,
@@ -34,5 +36,7 @@ instance FromJSON Weather where
 
 getWeather :: String -> IO (Maybe Weather)
 getWeather s = do
-    d <- simpleHttp $ "http://api.openweathermap.org/data/2.5/weather?units=metric&lang=fi&q=" ++ s
-    return $ decode d 
+               r <- try $ simpleHttp $ "http://api.openweathermap.org/data/2.5/weather?units=metric&lang=fi&q=" ++ s
+               case (r :: Either SomeException BS.ByteString) of
+                Left _ -> return Nothing
+                Right result -> return $ decode result

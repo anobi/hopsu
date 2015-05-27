@@ -32,6 +32,7 @@ executable Hopsu
                        mtl >=2.1,
                        utf8-string >=0.3.7,
                        aeson >= 0.1,
-                       http-conduit >= 1.0
+                       http-conduit >= 1.0,
+                       bytestring >= 0.10
   hs-source-dirs:      src
   default-language:    Haskell2010

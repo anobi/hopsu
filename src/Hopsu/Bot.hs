@@ -150,7 +150,7 @@ tellWeather w =
 
 pretty :: TimeDiff -> String
 pretty td =
-    unwords $ map (uncurry (++) . first show) $
+    unwords $ map (uncurry (++) . first show) $
     if null diffs then [(0,"s")] else diffs
     where merge (tot,acc) (sec,typ) = let (sec',tot') = divMod tot sec
                                       in (tot',(sec',typ):acc)
