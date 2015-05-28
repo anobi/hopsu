@@ -87,9 +87,7 @@ write s t = do
 
 -- say something to some(one/where)
 privmsg :: String -> Net ()
-privmsg s = do
-    c <- asks config
-    write "PRIVMSG" $ chan c ++ " :" ++ s
+privmsg s = asks config >>= \c -> write "PRIVMSG" $ chan c ++ " :" ++ s
 
 -- handle and obey the master's orders
 eval :: String -> Net ()
@@ -100,7 +98,7 @@ eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
 eval x | "!op " `isPrefixOf` x = op $ drop 4 x
 
 eval "!uptime"  = uptime >>= privmsg
-eval "!quit"    = write "QUIT" ":!ulos" >> liftIO (exitWith ExitSuccess)
+eval "!quit"    = write "QUIT" ":!ulos" >> liftIO exitSuccess
 eval _          = return ()
 
 -- tell the uptime
