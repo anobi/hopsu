@@ -36,7 +36,7 @@ hopsu :: IO ()
 hopsu = bracket connect dc botloop
     where
         dc          = hClose . socket
-        botloop st  = EX.catch ( runReaderT Hopsu.Bot.run st) (\(SomeException _) -> return ())
+        botloop st  = EX.catch ( runReaderT Hopsu.Bot.run st) (\(SomeException e) -> print e)
 
 -- open the connection and fire up the bot
 connect :: IO Bot
@@ -71,7 +71,7 @@ listen h = go $ do
     else if userjoin s then hello s
     else eval $ clean s
     where
-        go a   = a >> go a
+        go a        = a >> go a
         clean       = drop 1 . dropWhile (/= ':') . drop 1
         ping x      = "PING :" `isPrefixOf` x
         pong x      = write "PONG" $ ':' : drop 6 x
@@ -97,6 +97,7 @@ eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
 eval x | "!url " `isPrefixOf` x = url $ drop 5 x
 eval x | "!sää " `isPrefixOf` x = weather' $ drop 5 x
 eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
+eval x | "!op " `isPrefixOf` x = op $ drop 4 x
 
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO (exitWith ExitSuccess)
@@ -108,6 +109,9 @@ uptime = do
     now <- liftIO getClockTime
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
+
+op :: String -> Net ()
+op s = (asks db >>= \c -> liftIO $ isOp c s) >>= \o -> privmsg $ if o then "/op" ++ s else ""
 
 url :: String -> Net ()
 url s = do
