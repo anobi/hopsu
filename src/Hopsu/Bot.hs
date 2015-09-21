@@ -68,7 +68,7 @@ listen h = go $ do
     -- react to irc happenings (not user commands)
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
-    else if userjoin s then op (nick s) (chan s)
+    else if userjoin s then op (nick s) (ident s) (chan s)
     else eval $ clean s
     where
         go a        = a >> go a
@@ -79,6 +79,7 @@ listen h = go $ do
         hello x     = greet $ drop 1 x --drop the leading :
         nick x      = getNick $ words x
         chan x      = getChan $ words x
+        ident x     = getIdent $ words x
 
 -- send stuff to irck
 write :: String -> String -> Net()
@@ -109,10 +110,10 @@ uptime = do
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
 
-op :: String -> String -> Net ()
-op nick chan = do
-  c <- asks db
-  o <- liftIO $ isOp c nick
+op :: String -> String -> String -> Net ()
+op nick ident chan = do
+  conn <- asks db
+  o <- liftIO $ isOp conn ident chan
   if o
     then write "MODE" $ chan ++ " +o " ++ nick
     else privmsg "no ops for you"
@@ -135,6 +136,9 @@ splittan s = return (words s)
 
 getNick :: [String] -> String
 getNick s = takeWhile (/= '!') $ drop 1 $ head s
+
+getIdent :: [String] -> String
+getIdent s = drop 1 $ dropWhile (/= '!') $ head s
 
 getChan :: [String] -> String
 getChan s = drop 1 $ last s

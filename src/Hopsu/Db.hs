@@ -19,12 +19,15 @@ addurl c a u = do
     commit c
     return "ju"
 
-isOp :: Connection -> String -> IO Bool
-isOp c s = do
-    q <- trace ("opping " ++ s) $ quickQuery c "SELECT op FROM users WHERE nick = ?;" [toSql s]
+isOp :: Connection -> String -> String -> IO Bool
+isOp db ident chan = do
+    q <- quickQuery db "SELECT op FROM userchannel uc \
+                        \ JOIN users u ON u.user_id = uc.user_id \
+                        \ JOIN channels c ON c.channel_id = uc.channel_id \
+                        \ WHERE u.ident = ? AND c.channel = ?;" [toSql ident, toSql chan]
     case q of
-        [[SqlByteString o]] -> trace (show q) (return $ sqlToBool $ BS.toString o)
-        _ -> trace (show q) $ return False
+        [[SqlByteString o]] -> return $ sqlToBool $ BS.toString o
+        _ -> return False
 
 sqlToBool :: String -> Bool
 sqlToBool s
