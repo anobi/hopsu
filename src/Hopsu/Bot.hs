@@ -68,7 +68,7 @@ listen h = go $ do
     -- react to irc happenings (not user commands)
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
-    else if userjoin s then hello s
+    else if userjoin s then op (nick s) (chan s)
     else eval $ clean s
     where
         go a        = a >> go a
@@ -77,6 +77,8 @@ listen h = go $ do
         pong x      = write "PONG" $ ':' : drop 6 x
         userjoin x  = "JOIN" `isInfixOf` x
         hello x     = greet $ drop 1 x --drop the leading :
+        nick x      = getNick $ words x
+        chan x      = getChan $ words x
 
 -- send stuff to irck
 write :: String -> String -> Net()
@@ -95,7 +97,6 @@ eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
 eval x | "!url " `isPrefixOf` x = url $ drop 5 x
 eval x | "!sää " `isPrefixOf` x = weather' $ drop 5 x
 eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
-eval x | "!op " `isPrefixOf` x = op $ drop 4 x
 
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO exitSuccess
@@ -108,8 +109,13 @@ uptime = do
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
 
-op :: String -> Net ()
-op s = (asks db >>= \c -> liftIO $ isOp c s) >>= \o -> privmsg $ if o then "/op" ++ s else ""
+op :: String -> String -> Net ()
+op nick chan = do
+  c <- asks db
+  o <- liftIO $ isOp c nick
+  if o
+    then write "MODE" $ chan ++ " +o " ++ nick
+    else privmsg "no ops for you"
 
 url :: String -> Net ()
 url s = do
@@ -126,6 +132,12 @@ newurl s = do
 
 splittan :: String -> IO [String]
 splittan s = return (words s)
+
+getNick :: [String] -> String
+getNick s = takeWhile (/= '!') $ drop 1 $ head s
+
+getChan :: [String] -> String
+getChan s = drop 1 $ last s
 
 -- say hello to the guy who just joined the channel
 greet :: String -> Net ()
