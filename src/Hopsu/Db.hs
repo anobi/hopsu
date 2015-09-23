@@ -39,15 +39,14 @@ logUser db nick ident chan = do
         [[SqlByteString u]] -> do
             chansUpdated <- isOnChannel db ident chan
             nicksUpdated <- hasNick db ident nick
-            return "user " ++ ident ++ " existed, added to " ++ chan ++ ": " ++ show chansUpdated ++ ", added nick " ++ nick ++ " to user: " ++ nicksUpdated
-
+            return "user existed"
         -- User didn't exist, add new user & update channels and nick
         _ -> do
             quickQuery db "INSERT INTO USERS (ident) VALUES (?);" [toSql ident]
             commit db
             addToChannel db ident chan
             addNick db ident nick
-            return "created user " ++ ident ++ " (" ++ nick ++ ") and added to channel " ++ chan
+            return "created new user"
 
 isOnChannel :: Connection -> String -> String -> IO Bool
 isOnChannel db ident chan = do
@@ -56,7 +55,7 @@ isOnChannel db ident chan = do
                         \ JOIN channels c ON c.channel_id = uc.channel_id \
                         \ WHERE u.ident = ? AND c.channel = ?;" [toSql ident, toSql chan]
     case q of
-        [[SqlByteString]] -> return True
+        [[SqlByteString _]] -> return True
         _ -> do
             addToChannel db ident chan
             return False
@@ -67,7 +66,7 @@ addToChannel db ident chan = do
     chid <- quickQuery db "SELECT channel_id FROM channels WHERE channel = ?;" [toSql chan]
     uid <- quickQuery db "SELECT user_id FROM users WHERE ident = ?;" [toSql ident]
     quickQuery db "INSERT INTO userchannel (user_id, channel_id, op, banned) \
-                    \VALUES (?, ?, ?, ?);" [toSql uid, toSql chid, toSql 0, toSql 0]
+                    \VALUES (?, ?, ?, ?);" [toSql $ head uid !! 0, toSql $ head chid !! 0, toSql "0", toSql "0"]
     commit db
     return ()
 
@@ -77,7 +76,7 @@ hasNick db ident nick = do
                         \ JOIN users u ON u.user_id = n.user_id \
                         \ WHERE u.ident = ? AND n.nick = ?;" [toSql ident, toSql nick]
     case q of
-        [[SqlByteString]] -> return True
+        [[SqlByteString _]] -> return True
         _ -> do
             addNick db ident nick
             return False
@@ -86,7 +85,7 @@ addNick :: Connection -> String -> String -> IO ()
 addNick db ident nick = do
     -- add nick to user
     uid <- quickQuery db "SELECT user_id FROM users WHERE ident = ?;" [toSql ident]
-    quickQuery db "INSERT INTO nick (user_id, nick) VALUES (?, ?);" [toSql uid, toSql nick]
+    quickQuery db "INSERT INTO nick (user_id, nick) VALUES (?, ?);" [toSql (head uid !! 0), toSql nick]
     commit db
     return ()
 

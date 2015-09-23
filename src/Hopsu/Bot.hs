@@ -69,7 +69,7 @@ listen h = go $ do
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
     else if userjoin s then op (nick s) (ident s) (chan s)
-    else if userjoin s then adduser (nick s) (ident s) (chan s)
+    else if userjoin s then Hopsu.Bot.logUser (nick s) (ident s) (chan s)
     else eval $ clean s
     where
         go a        = a >> go a
@@ -89,9 +89,8 @@ write s t = do
     liftIO $ hPrintf h   "%s %s\r\n" s t
     liftIO $ printf      "> %s %s\n" s t
 
-consoleWrite :: String -> String -> Net()
-consoleWrite s t = do
-    liftIO $ printf "%s %s\n" s t
+consoleWrite :: String -> Net()
+consoleWrite s = liftIO $ printf "%s\n" s
 
 -- say something to some(one/where)
 privmsg :: String -> Net ()
@@ -124,7 +123,8 @@ uptime = do
 logUser :: String -> String -> String -> Net()
 logUser nick ident chan = do
   conn <- asks db
-  consoleWrite $ DB.logUser conn nick ident chan
+  result <- liftIO $ DB.logUser conn nick ident chan
+  consoleWrite result
     
 addop :: String -> Net ()
 addop nick = do
