@@ -50,10 +50,10 @@ logUser db nick ident chan = do
 
 isOnChannel :: Connection -> String -> String -> IO Bool
 isOnChannel db ident chan = do
-    q <- quickQuery db "SELECT channel_id FROM userchannel uc \
-                        \ JOIN users u ON u.user_id = uc.user_id \
-                        \ JOIN channels c ON c.channel_id = uc.channel_id \
-                        \ WHERE u.ident = ? AND c.channel = ?;" [toSql ident, toSql chan]
+    q <- quickQuery db "SELECT uc.channel_id FROM userchannel uc \
+                       \JOIN users u ON u.user_id = uc.user_id \
+                       \JOIN channels c ON c.channel_id = uc.channel_id \
+                       \WHERE u.ident = ? AND c.channel = ?;" [toSql ident, toSql chan]
     case q of
         [[SqlByteString _]] -> return True
         _ -> do

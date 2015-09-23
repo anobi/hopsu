@@ -68,18 +68,17 @@ listen h = go $ do
     -- react to irc happenings (not user commands)
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
-    else if userjoin s then op (nick s) (ident s) (chan s)
-    else if userjoin s then Hopsu.Bot.logUser (nick s) (ident s) (chan s)
+    else if join s then userjoin (uNick s) (ident s) (ch s)
     else eval $ clean s
     where
         go a        = a >> go a
         clean       = drop 1 . dropWhile (/= ':') . drop 1
         ping x      = "PING :" `isPrefixOf` x
         pong x      = write "PONG" $ ':' : drop 6 x
-        userjoin x  = "JOIN" `isInfixOf` x
+        join x  = "JOIN" `isInfixOf` x
         hello x     = greet $ drop 1 x --drop the leading :
-        nick x      = getNick $ words x
-        chan x      = getChan $ words x
+        uNick x      = getNick $ words x
+        ch x      = getChan $ words x
         ident x     = getIdent $ words x
 
 -- send stuff to irck
@@ -115,6 +114,13 @@ uptime = do
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
 
+-- function to wrap all the joining actions in
+userjoin :: String -> String -> String -> Net()
+userjoin usernick ident ch = do
+  Hopsu.Bot.logUser usernick ident ch
+  op usernick ident ch
+  return ()
+
 -- ok this kind of thing (inputs, millions of strings) is getting pretty shitty
 -- gotta create an user object or something and use that as an input
 -- but that's a refactoring battle for another day
@@ -122,13 +128,13 @@ uptime = do
 -- update new nick if such things are necessary
 logUser :: String -> String -> String -> Net()
 logUser nick ident chan = do
+  consoleWrite "logging user??"
   conn <- asks db
   result <- liftIO $ DB.logUser conn nick ident chan
   consoleWrite result
     
 addop :: String -> Net ()
-addop nick = do
-  write "WHOIS" nick
+addop n = write "WHOIS" n
     
 op :: String -> String -> String -> Net ()
 op nick ident chan = do
@@ -136,7 +142,7 @@ op nick ident chan = do
   o <- liftIO $ DB.isOp conn ident chan
   if o
     then write "MODE" $ chan ++ " +o " ++ nick
-    else return ()
+    else consoleWrite "not opping lol"
 
 url :: String -> Net ()
 url s = do
