@@ -29,6 +29,24 @@ isOp db ident chan = do
         [[SqlByteString o]] -> return $ sqlToBool $ BS.toString o
         _ -> return False
 
+logUser :: Connection -> String -> String -> String -> IO String
+logUser db nick ident chan = do
+    -- check if ident exists
+    user <- quickQuery db "SELECT user_id FROM users WHERE ident = ?;" [toSql ident]
+    -- something returns if the user exists, else we'll just add a new one
+    case user of
+        [[SqlByteString u]] -> do
+            -- check if user already has channel, add if not
+            c <- isOnChannel db ident chan
+        _ -> do
+            user <- quickQuery "INSERT INTO USERS (ident) VALUES (?);" [toSql ident]
+            quickQuery "INSERT INTO nick (user_id, nick) VALUES (?, ?);" [toSql id, nick]
+
+isOnChannel :: Connection -> String -> String -> Bool
+isOnChannel db ident channel = do
+  q <- quickQuery "SELECT "
+
+
 sqlToBool :: String -> Bool
 sqlToBool s
     | s == "0" = False

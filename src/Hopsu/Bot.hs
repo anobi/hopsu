@@ -21,7 +21,7 @@ import Control.Exception as EX
 
 import Prelude
 
-import Hopsu.Db
+import Hopsu.Db as DB
 import Hopsu.Config
 import Hopsu.Heather
 
@@ -69,6 +69,7 @@ listen h = go $ do
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
     else if userjoin s then op (nick s) (ident s) (chan s)
+    else if userjoin s then adduser (nick s) (ident s) (chan s)
     else eval $ clean s
     where
         go a        = a >> go a
@@ -88,6 +89,10 @@ write s t = do
     liftIO $ hPrintf h   "%s %s\r\n" s t
     liftIO $ printf      "> %s %s\n" s t
 
+consoleWrite :: String -> String -> Net()
+consoleWrite s t = do
+    liftIO $ printf "%s %s\n" s t
+
 -- say something to some(one/where)
 privmsg :: String -> Net ()
 privmsg s = asks config >>= \c -> write "PRIVMSG" $ chan c ++ " :" ++ s
@@ -98,6 +103,7 @@ eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
 eval x | "!url " `isPrefixOf` x = url $ drop 5 x
 eval x | "!sää " `isPrefixOf` x = weather' $ drop 5 x
 eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
+eval x | "!addop" `isPrefixOf` x = addop $ last $ words x
 
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO exitSuccess
@@ -110,25 +116,39 @@ uptime = do
     zero <- asks starttime
     return . pretty $ diffClockTimes now zero
 
+-- ok this kind of thing (inputs, millions of strings) is getting pretty shitty
+-- gotta create an user object or something and use that as an input
+-- but that's a refactoring battle for another day
+-- so ANYWAY this function checks if joiner already exists in users, add if not
+-- update new nick if such things are necessary
+logUser :: String -> String -> String -> Net()
+logUser nick ident chan = do
+  conn <- asks db
+  consoleWrite $ DB.logUser conn nick ident chan
+    
+addop :: String -> Net ()
+addop nick = do
+  write "WHOIS" nick
+    
 op :: String -> String -> String -> Net ()
 op nick ident chan = do
   conn <- asks db
-  o <- liftIO $ isOp conn ident chan
+  o <- liftIO $ DB.isOp conn ident chan
   if o
     then write "MODE" $ chan ++ " +o " ++ nick
-    else privmsg "no ops for you"
+    else return ()
 
 url :: String -> Net ()
 url s = do
     c <- asks db
-    link <- liftIO $ geturl c s
+    link <- liftIO $ DB.geturl c s
     privmsg link
 
 newurl :: String -> Net ()
 newurl s = do
     c <- asks db
     strs <- liftIO $ splittan s
-    result <- liftIO $ addurl c (head strs) (strs !! 1)
+    result <- liftIO $ DB.addurl c (head strs) (strs !! 1)
     privmsg result
 
 splittan :: String -> IO [String]
