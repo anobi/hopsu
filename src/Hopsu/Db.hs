@@ -35,17 +35,60 @@ logUser db nick ident chan = do
     user <- quickQuery db "SELECT user_id FROM users WHERE ident = ?;" [toSql ident]
     -- something returns if the user exists, else we'll just add a new one
     case user of
+        --User exists, update user's channels & nicks if necessary
         [[SqlByteString u]] -> do
-            -- check if user already has channel, add if not
-            c <- isOnChannel db ident chan
+            chansUpdated <- isOnChannel db ident chan
+            nicksUpdated <- hasNick db ident nick
+            return "user " ++ ident ++ " existed, added to " ++ chan ++ ": " ++ show chansUpdated ++ ", added nick " ++ nick ++ " to user: " ++ nicksUpdated
+
+        -- User didn't exist, add new user & update channels and nick
         _ -> do
-            user <- quickQuery "INSERT INTO USERS (ident) VALUES (?);" [toSql ident]
-            quickQuery "INSERT INTO nick (user_id, nick) VALUES (?, ?);" [toSql id, nick]
+            quickQuery db "INSERT INTO USERS (ident) VALUES (?);" [toSql ident]
+            commit db
+            addToChannel db ident chan
+            addNick db ident nick
+            return "created user " ++ ident ++ " (" ++ nick ++ ") and added to channel " ++ chan
 
-isOnChannel :: Connection -> String -> String -> Bool
-isOnChannel db ident channel = do
-  q <- quickQuery "SELECT "
+isOnChannel :: Connection -> String -> String -> IO Bool
+isOnChannel db ident chan = do
+    q <- quickQuery db "SELECT channel_id FROM userchannel uc \
+                        \ JOIN users u ON u.user_id = uc.user_id \
+                        \ JOIN channels c ON c.channel_id = uc.channel_id \
+                        \ WHERE u.ident = ? AND c.channel = ?;" [toSql ident, toSql chan]
+    case q of
+        [[SqlByteString]] -> return True
+        _ -> do
+            addToChannel db ident chan
+            return False
 
+addToChannel :: Connection -> String -> String -> IO ()
+addToChannel db ident chan = do
+    -- add to channel
+    chid <- quickQuery db "SELECT channel_id FROM channels WHERE channel = ?;" [toSql chan]
+    uid <- quickQuery db "SELECT user_id FROM users WHERE ident = ?;" [toSql ident]
+    quickQuery db "INSERT INTO userchannel (user_id, channel_id, op, banned) \
+                    \VALUES (?, ?, ?, ?);" [toSql uid, toSql chid, toSql 0, toSql 0]
+    commit db
+    return ()
+
+hasNick :: Connection -> String -> String -> IO Bool
+hasNick db ident nick = do
+    q <- quickQuery db "SELECT nick_id FROM nick n \
+                        \ JOIN users u ON u.user_id = n.user_id \
+                        \ WHERE u.ident = ? AND n.nick = ?;" [toSql ident, toSql nick]
+    case q of
+        [[SqlByteString]] -> return True
+        _ -> do
+            addNick db ident nick
+            return False
+
+addNick :: Connection -> String -> String -> IO ()
+addNick db ident nick = do
+    -- add nick to user
+    uid <- quickQuery db "SELECT user_id FROM users WHERE ident = ?;" [toSql ident]
+    quickQuery db "INSERT INTO nick (user_id, nick) VALUES (?, ?);" [toSql uid, toSql nick]
+    commit db
+    return ()
 
 sqlToBool :: String -> Bool
 sqlToBool s
