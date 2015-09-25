@@ -4,7 +4,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import Data.ByteString.UTF8 as BS
 import Data.Bool()
-import Data.IORef
+import System.IO.Unsafe
 
 geturl :: Connection -> String -> IO String
 geturl c s = handleSqlError $ do
@@ -37,15 +37,16 @@ addOp db ident chan = do
     commit db
     return $ "added " ++ ident ++ " as an op on " ++ chan
 
+-- TODO try to wrap your head around this whole IO deal
+-- and figure out a way to do this without unsafePerformIO
 logUser :: Connection -> String -> String -> String -> IO String
-logUser db nick ident chan
-    | uid == 0 = return $ "logged user " ++ nick ++ " " ++ ident ++ " @ " ++ chan
-    | uid >= 1 = addUser db ident nick chan
-    | otherwise = return "error logging user"
+logUser db nick ident chan = do
+    if exists then return $ "Logged user " ++ ident ++ ". " ++ nicksUpdated ++ " " ++ chansUpdated
+    else addUser db ident nick chan
     where
-        uid = x >>= \x <- getUserId db ident
-        chansUpdated = isOnChannel db ident chan
-        nicksUpdated = hasNick db ident nick
+        exists       = unsafePerformIO $ userExists db ident
+        chansUpdated = unsafePerformIO $ isOnChannel db ident chan
+        nicksUpdated = unsafePerformIO $ hasNick db ident nick
 
 addUser :: Connection -> String -> String -> String -> IO String
 addUser db ident nick chan = do
@@ -71,6 +72,13 @@ addNick db ident nick = do
     _ <- quickQuery db "INSERT INTO nick (user_id, nick) VALUES (?, ?);" [toSql uid, toSql nick]
     commit db
 
+userExists :: Connection -> String -> IO Bool
+userExists db ident = do
+    q <- quickQuery db "SELECT 1 FROM users WHERE ident = ?;" [toSql ident]
+    case q of
+        [[SqlByteString _ ]] -> return True
+        _ -> return False
+
 isOnChannel :: Connection -> String -> String -> IO String
 isOnChannel db ident chan = do
     q <- quickQuery db "SELECT uc.channel_id FROM userchannel uc \
@@ -94,19 +102,20 @@ hasNick db ident nick = do
             addNick db ident nick
             return $ "updated " ++ ident ++ " with nick " ++ nick
 
-getUserId :: Connection -> String -> IO Int
+getUserId :: Connection -> String -> IO String
 getUserId db ident = do
     uid <- quickQuery db "SELECT user_id FROM users WHERE ident = ?;" [toSql ident]
-    return $ fromSql $ head uid !! 0
+    case uid of
+        [[SqlByteString u]] -> return $ BS.toString u
+        _ -> return ""
 
-getChanId :: Connection -> String -> IO Int
+getChanId :: Connection -> String -> IO String
 getChanId db chan = do
     chid <- quickQuery db "SELECT channel_id FROM channels WHERE channel = ?;" [toSql chan]
-    return $ fromSql $ head chid !! 0
+    case chid of
+        [[SqlByteString c]] -> return $ BS.toString c
+        _ -> return ""
     
 sqlToBool :: String -> Bool
-sqlToBool s
-    | s == "0" = False
-    | s == "1" = True
-    | otherwise = False
-
+sqlToBool s | s == "1" = True
+            | otherwise = False
