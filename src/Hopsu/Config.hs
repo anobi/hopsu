@@ -1,10 +1,9 @@
 module Hopsu.Config where
 
-import Data.ConfigFile
 import Control.Monad.Error
+import Data.ConfigFile
 
-data Config = Config {server :: String, port :: Int, nick :: String, chan :: String, pass :: String} deriving (Read, Show)
-
+import Hopsu.Types
 
 -- read the config file
 readConfig :: String -> IO Config
@@ -20,11 +19,10 @@ readConfig f = do
         c <- get x "Connection" "chan"
         ps <- get x "Connection" "pass"
 
-        return (Config { server = s
+        return Config { server = s
                         ,port = p
-                        ,nick = n
-                        ,chan = c
+                        ,botNick = n
+                        ,botChan = c
                         ,pass = ps
-                        })
-
+                        }
     either (\x -> error (snd x)) (\x -> return x) rv

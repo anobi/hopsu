@@ -21,12 +21,11 @@ import Control.Exception as EX
 
 import Prelude
 
-import Hopsu.Db as DB
+import Hopsu.Types
 import Hopsu.Config
+import Hopsu.Db as DB
+import Hopsu.Handler as Handler
 import Hopsu.Heather
-
-data Bot = Bot {starttime :: ClockTime, socket :: Handle, config :: Config, db :: Connection}
-type Net = ReaderT Bot IO
 
 --
 -- engine part, under the hood etc
@@ -61,7 +60,7 @@ run = do
 
 -- listen and respond to stuff from irck
 listen :: Handle -> Net ()
-listen h = go $ do
+listen h = loop $ do
     s <- init `fmap` liftIO (hGetLine h)
     liftIO $ putStrLn s
 
@@ -71,14 +70,14 @@ listen h = go $ do
     else if join s then userjoin (uNick s) (ident s) (ch s)
     else eval $ clean s
     where
-        go a        = a >> go a
+        loop a      = a >> loop a
         clean       = drop 1 . dropWhile (/= ':') . drop 1
         ping x      = "PING :" `isPrefixOf` x
         pong x      = write "PONG" $ ':' : drop 6 x
-        join x  = "JOIN" `isInfixOf` x
+        join x      = "JOIN" `isInfixOf` x
         hello x     = greet $ drop 1 x --drop the leading :
-        uNick x      = getNick $ words x
-        ch x      = getChan $ words x
+        uNick x     = getNick $ words x
+        ch x        = getChan $ words x
         ident x     = getIdent $ words x
 
 -- send stuff to irck
@@ -97,11 +96,10 @@ privmsg s = asks config >>= \c -> write "PRIVMSG" $ chan c ++ " :" ++ s
 
 -- handle and obey the master's orders
 eval :: String -> Net ()
-eval x | "!id " `isPrefixOf` x = privmsg $ drop 4 x
-eval x | "!url " `isPrefixOf` x = url $ drop 5 x
-eval x | "!sää " `isPrefixOf` x = weather' $ drop 5 x
+eval x | "!id "     `isPrefixOf` x = privmsg $ drop 4 x
+eval x | "!url "    `isPrefixOf` x = url $ drop 5 x
+eval x | "!sää "    `isPrefixOf` x = weather' $ drop 5 x
 eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
-eval x | "!addop" `isPrefixOf` x = addop $ last $ words x
 
 eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO exitSuccess
@@ -117,48 +115,10 @@ uptime = do
 -- function to wrap all the joining actions in
 userjoin :: String -> String -> String -> Net()
 userjoin usernick ident ch = do
-  Hopsu.Bot.logUser usernick ident ch
-  op usernick ident ch
-  return ()
-
--- ok this kind of thing (inputs, millions of strings) is getting pretty shitty
--- gotta create an user object or something and use that as an input
--- but that's a refactoring battle for another day
--- so ANYWAY this function checks if joiner already exists in users, add if not
--- update new nick if such things are necessary
-logUser :: String -> String -> String -> Net()
-logUser nick ident chan = do
-  consoleWrite "logging user??"
-  conn <- asks db
-  result <- liftIO $ DB.logUser conn nick ident chan
-  consoleWrite result
-    
-addop :: String -> Net ()
-addop n = write "WHOIS" n
-    
-op :: String -> String -> String -> Net ()
-op nick ident chan = do
-  conn <- asks db
-  o <- liftIO $ DB.isOp conn ident chan
-  if o
-    then write "MODE" $ chan ++ " +o " ++ nick
-    else consoleWrite "not opping lol"
-
-url :: String -> Net ()
-url s = do
-    c <- asks db
-    link <- liftIO $ DB.geturl c s
-    privmsg link
-
-newurl :: String -> Net ()
-newurl s = do
-    c <- asks db
-    strs <- liftIO $ splittan s
-    result <- liftIO $ DB.addurl c (head strs) (strs !! 1)
-    privmsg result
-
-splittan :: String -> IO [String]
-splittan s = return (words s)
+    user <- User {ident = ident, nick = usernick, chan = ch}
+    db <- asks db
+    write Handler.logUser db user
+    write Handler.op db user
 
 getNick :: [String] -> String
 getNick s = takeWhile (/= '!') $ drop 1 $ head s
