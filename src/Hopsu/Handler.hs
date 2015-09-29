@@ -20,10 +20,12 @@ import Hopsu.Db as DB
 logUser :: Connection -> User -> IO String
 logUser db user = liftIO $ DB.logUser db (nick user) (ident user) (chan user)
     
-op :: Connection -> User -> Maybe (IO IrcMessage)
+op :: Connection -> User -> IO (Maybe IrcMessage)
 op db user = do
     o <- liftIO $ DB.isOp db (ident user) (chan user)
-    when o return $ "MODE" ++ chan user ++ " +o " ++ nick user
+    if o then return IrcMessage { command = "MODE", params = opstring }
+    else return Nothing
+    where opstring = chan user ++ " +o " ++ nick user 
 
 getUrl :: Connection -> String -> IO String
 getUrl = DB.geturl

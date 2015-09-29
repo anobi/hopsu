@@ -36,7 +36,7 @@ instance FromJSON Weather where
 
 getWeather :: String -> IO (Maybe Weather)
 getWeather s = do
-               r <- try $ simpleHttp $ "http://api.openweathermap.org/data/2.5/weather?units=metric&lang=fi&q=" ++ s
-               case (r :: Either SomeException BS.ByteString) of
-                Left _ -> return Nothing
-                Right result -> return $ decode result
+    r <- try $ simpleHttp $ "http://api.openweathermap.org/data/2.5/weather?units=metric&lang=fi&q=" ++ s
+    case (r :: Either SomeException BS.ByteString) of
+        Left _ -> return Nothing
+        Right result -> return $ decode result
