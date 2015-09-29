@@ -73,36 +73,43 @@ listen h = loop $ do
         loop a      = a >> loop a
         clean       = drop 1 . dropWhile (/= ':') . drop 1
         ping x      = "PING :" `isPrefixOf` x
-        pong x      = write "PONG" $ ':' : drop 6 x
+        pong x      = write $ toCmd "PONG" (':' : drop 6 x)
         join x      = "JOIN" `isInfixOf` x
         hello x     = greet $ drop 1 x --drop the leading :
         uNick x     = getNick $ words x
         ch x        = getChan $ words x
         ident x     = getIdent $ words x
 
--- send stuff to irck
-write :: String -> String -> Net()
-write s t = do
+toCmd :: String -> String -> IrcMessage
+toCmd c p = IrcMessage {command = c, params = p}
+
+-- send commands to irck
+write :: IrcMessage -> Net()
+write msg = do
     h <- asks socket
     liftIO $ hPrintf h   "%s %s\r\n" s t
     liftIO $ printf      "> %s %s\n" s t
+    where s = command msg
+          t = params msg
 
 consoleWrite :: String -> Net()
 consoleWrite s = liftIO $ printf "%s\n" s
 
 -- say something to some(one/where)
 privmsg :: String -> Net ()
-privmsg s = asks config >>= \c -> write "PRIVMSG" $ chan c ++ " :" ++ s
+privmsg s = write msg
+    where msg = toCmd "PRIVMSG" (chan c ++ " :" ++ s)
+          c = asks config
 
 -- handle and obey the master's orders
 eval :: String -> Net ()
 eval x | "!id "     `isPrefixOf` x = privmsg $ drop 4 x
-eval x | "!url "    `isPrefixOf` x = url $ drop 5 x
+-- eval x | "!url "    `isPrefixOf` x = privmsg $ liftIO $ Handler.getUrl $ drop 5 x
 eval x | "!sää "    `isPrefixOf` x = weather' $ drop 5 x
-eval x | "!newurl " `isPrefixOf` x = newurl $ drop 8 x
+-- eval x | "!newurl " `isPrefixOf` x = liftIO $ Handler.newurl $ drop 8 x
 
 eval "!uptime"  = uptime >>= privmsg
-eval "!quit"    = write "QUIT" ":!ulos" >> liftIO exitSuccess
+eval "!quit"    = write (toCmd "QUIT" ":!ulos") >> liftIO exitSuccess
 eval _          = return ()
 
 -- tell the uptime
@@ -116,9 +123,11 @@ uptime = do
 userjoin :: String -> String -> String -> Net()
 userjoin usernick ident ch = do
     user <- User {ident = ident, nick = usernick, chan = ch}
-    db <- asks db
-    write Handler.logUser db user
-    write Handler.op db user
+    c <- asks db
+    liftIO $ Handler.logUser c user
+    op <- liftIO $ Handler.op c user
+    case op of 
+        Just (IrcMessage {}) -> write $ fromJust op
 
 getNick :: [String] -> String
 getNick s = takeWhile (/= '!') $ drop 1 $ head s

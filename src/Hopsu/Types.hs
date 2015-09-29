@@ -4,7 +4,6 @@ import System.Time
 import System.IO
 import Control.Monad.Reader
 import Database.HDBC.Sqlite3
-import Data.ConfigFile
 
 type Net = ReaderT Bot IO
 
