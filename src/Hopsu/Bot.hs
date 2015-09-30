@@ -23,9 +23,7 @@ import Prelude
 
 import Hopsu.Types
 import Hopsu.Config
-import Hopsu.Db as DB
 import Hopsu.Handler as Handler
-import Hopsu.Heather
 
 --
 -- engine part, under the hood etc
@@ -53,41 +51,43 @@ connect = do
 run :: Net ()
 run = do
     c <- asks config
-    write "NICK" $ nick c
-    write "USER" $ nick c ++ " 0 * :hopperbot"
-    write "JOIN" $ chan c ++ " " ++ pass c
+    write (toCmd "NICK" (botNick c))
+    write (toCmd "USER" (botNick c ++ " 0 * :hopperbot"))
+    write (toCmd "JOIN" (botChan c ++ " " ++ pass c))
     asks socket >>= listen
 
 -- listen and respond to stuff from irck
 listen :: Handle -> Net ()
-listen h = loop $ do
+listen h = botLoop $ do
     s <- init `fmap` liftIO (hGetLine h)
     liftIO $ putStrLn s
 
     -- react to irc happenings (not user commands)
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
-    else if join s then userjoin (uNick s) (ident s) (ch s)
+    else if userJoin s then handleJoin (toUser (uNick s) (uIdent s) (ch s))
     else eval $ clean s
     where
-        loop a      = a >> loop a
+        botLoop a   = a >> botLoop a
         clean       = drop 1 . dropWhile (/= ':') . drop 1
         ping x      = "PING :" `isPrefixOf` x
         pong x      = write $ toCmd "PONG" (':' : drop 6 x)
-        join x      = "JOIN" `isInfixOf` x
-        hello x     = greet $ drop 1 x --drop the leading :
+        userJoin x  = "JOIN" `isInfixOf` x
         uNick x     = getNick $ words x
         ch x        = getChan $ words x
-        ident x     = getIdent $ words x
+        uIdent x    = getIdent $ words x
 
 toCmd :: String -> String -> IrcMessage
 toCmd c p = IrcMessage {command = c, params = p}
+
+toUser :: String -> String -> String -> User
+toUser i n c = User {ident = i, nick = n, chan = c}
 
 -- send commands to irck
 write :: IrcMessage -> Net()
 write msg = do
     h <- asks socket
-    liftIO $ hPrintf h   "%s %s\r\n" s t
+    _ <- liftIO $ hPrintf h   "%s %s\r\n" s t
     liftIO $ printf      "> %s %s\n" s t
     where s = command msg
           t = params msg
@@ -96,19 +96,17 @@ consoleWrite :: String -> Net()
 consoleWrite s = liftIO $ printf "%s\n" s
 
 -- say something to some(one/where)
-privmsg :: String -> Net ()
-privmsg s = write msg
-    where msg = toCmd "PRIVMSG" (chan c ++ " :" ++ s)
-          c = asks config
+privmsg :: String -> String -> IrcMessage
+privmsg c s = toCmd "PRIVMSG" (c ++ " :" ++ s)
 
 -- handle and obey the master's orders
+-- todo: get channel
 eval :: String -> Net ()
-eval x | "!id "     `isPrefixOf` x = privmsg $ drop 4 x
 -- eval x | "!url "    `isPrefixOf` x = privmsg $ liftIO $ Handler.getUrl $ drop 5 x
-eval x | "!sää "    `isPrefixOf` x = weather' $ drop 5 x
 -- eval x | "!newurl " `isPrefixOf` x = liftIO $ Handler.newurl $ drop 8 x
-
-eval "!uptime"  = uptime >>= privmsg
+-- eval "!uptime"  = write $ privmsg  (botChan c) uptime
+-- eval x | "!id "     `isPrefixOf` x = privmsg $ drop 4 x
+-- eval x | "!sää "    `isPrefixOf` x = weather' $ drop 5 x
 eval "!quit"    = write (toCmd "QUIT" ":!ulos") >> liftIO exitSuccess
 eval _          = return ()
 
@@ -120,14 +118,14 @@ uptime = do
     return . pretty $ diffClockTimes now zero
 
 -- function to wrap all the joining actions in
-userjoin :: String -> String -> String -> Net()
-userjoin usernick ident ch = do
-    user <- User {ident = ident, nick = usernick, chan = ch}
+handleJoin :: User -> Net()
+handleJoin user = do
     c <- asks db
-    liftIO $ Handler.logUser c user
-    op <- liftIO $ Handler.op c user
-    case op of 
-        Just (IrcMessage {}) -> write $ fromJust op
+    _ <- liftIO $ Handler.logUser c user
+    isOp <- liftIO $ Handler.op c user
+    case isOp of 
+        Just (IrcMessage {}) -> write $ fromJust isOp
+        _ -> return ()
 
 getNick :: [String] -> String
 getNick s = takeWhile (/= '!') $ drop 1 $ head s
@@ -138,28 +136,9 @@ getIdent s = drop 1 $ dropWhile (/= '!') $ head s
 getChan :: [String] -> String
 getChan s = drop 1 $ last s
 
--- say hello to the guy who just joined the channel
-greet :: String -> Net ()
-greet x =
-    privmsg $ "Eyh " ++ guy ++ ", " ++ greeting
-    where
-        guy = takeWhile (/= '!') x
-        greeting = "loool"
-
-weather' :: String -> Net ()
-weather' city = do
-    w <- liftIO $ getWeather city
-    case w of
-        Just (Weather {}) -> privmsg $ tellWeather $ fromJust w
-        _ -> privmsg "juuh en tiärä..."
-
 --
 -- housekeeping stuff
 --
-
-tellWeather :: Weather -> String
-tellWeather w =
-    "Elikkäs " ++ description w ++ ", lämpöä " ++ show (temp w) ++ " astetta ja tuuleepi " ++ show (wSpeed w) ++ " m/s suunnasta " ++ show (wDeg w)
 
 pretty :: TimeDiff -> String
 pretty td =
