@@ -130,14 +130,13 @@ handleJoin user = do
         Just (IrcCommand {}) -> write $ fromJust isOp
         _ -> return ()
 
-handleReply :: [String] -> Net()
-handleReply s = do
-    c <- asks config
-    if code == "311" then write (privmsg (botChan c) (nick ++ " " ++ ident))
-    else return ()
-    where code = s !! 1
-          nick = s !! 3
-          ident = show (s !! 4 ++ "@" ++ s !! 5)
+-- Response codes:
+-- 311 - whois user info (nick ~nick@server.com * :username)
+-- 319 - whois channel info (nick :#chan1 #chan2)
+handleReply :: String -> [String] -> Net()
+handleReply code resp
+    | code == "311" = Handler.logNick (resp !! 1) (resp !! 2 ++ "@" ++ resp !! 3)
+    | code == "319" = Handler.logChannels (resp !! 1) (resp !! 2)
 
 getNick :: [String] -> String
 getNick s = takeWhile (/= '!') $ drop 1 $ head s

@@ -12,6 +12,13 @@ import Hopsu.Heather as Heather
 -- update new nick if such things are necessary
 logUser :: Connection -> User -> IO String
 logUser c user = DB.logUser c (nick user) (ident user) (chan user)
+
+-- this is useless, just use the db function in bot module right?
+logNick :: Connection -> String -> String -> IO String
+logNick = DB.logUser c nick ident
+
+logChannels :: Connection -> String -> [String] -> IO String
+logChannels c user chans = DB.addToChannel 
     
 op :: Connection -> User -> IO (Maybe IrcCommand)
 op c user = do

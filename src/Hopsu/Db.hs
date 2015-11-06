@@ -48,6 +48,15 @@ logUser db nick ident chan = do
         chansUpdated = unsafePerformIO $ isOnChannel db ident chan
         nicksUpdated = unsafePerformIO $ hasNick db ident nick
 
+-- and same without chan info
+logUser :: Connection -> String -> String -> IO String
+logUser db nick ident = do
+    if exists then return $ "Logged user " ++ ident ++ ". " ++ nicksUpdated
+    else addUser db ident nick chan
+    where
+        exists       = unsafePerformIO $ userExists db ident
+        nicksUpdated = unsafePerformIO $ hasNick db ident nick
+
 addUser :: Connection -> String -> String -> String -> IO String
 addUser db ident nick chan = do
     _ <- quickQuery db "INSERT INTO USERS (ident) VALUES (?);" [toSql ident]
