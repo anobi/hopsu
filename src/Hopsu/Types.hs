@@ -33,7 +33,7 @@ data Url = Url {
     , url :: String
     }
 
-data IrcMessage = IrcMessage {
+data IrcCommand = IrcCommand {
     command :: String
     , params :: String
     }

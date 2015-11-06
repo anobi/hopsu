@@ -13,10 +13,10 @@ import Hopsu.Heather as Heather
 logUser :: Connection -> User -> IO String
 logUser c user = DB.logUser c (nick user) (ident user) (chan user)
     
-op :: Connection -> User -> IO (Maybe IrcMessage)
+op :: Connection -> User -> IO (Maybe IrcCommand)
 op c user = do
     o <- DB.isOp c (ident user) (chan user)
-    if o then return $ Just IrcMessage { command = "MODE", params = opstring }
+    if o then return $ Just IrcCommand { command = "MODE", params = opstring }
     else return Nothing
     where opstring = chan user ++ " +o " ++ nick user 
 

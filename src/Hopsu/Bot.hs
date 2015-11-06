@@ -60,12 +60,14 @@ run = do
 listen :: Handle -> Net ()
 listen h = botLoop $ do
     s <- init `fmap` liftIO (hGetLine h)
+    c <- asks config
     liftIO $ putStrLn s
 
     -- react to irc happenings (not user commands)
     -- join messages are like :nick!ident@server JOIN :#channel
     if ping s then pong s
     else if userJoin s then handleJoin (toUser (uNick s) (uIdent s) (ch s))
+    else if (":" ++ server c) `isPrefixOf` s then handleReply $ words s
     else eval $ clean s
     where
         botLoop a   = a >> botLoop a
@@ -77,14 +79,14 @@ listen h = botLoop $ do
         ch x        = getChan $ words x
         uIdent x    = getIdent $ words x
 
-toCmd :: String -> String -> IrcMessage
-toCmd c p = IrcMessage {command = c, params = p}
+toCmd :: String -> String -> IrcCommand
+toCmd c p = IrcCommand {command = c, params = p}
 
 toUser :: String -> String -> String -> User
 toUser i n c = User {ident = i, nick = n, chan = c}
 
 -- send commands to irck
-write :: IrcMessage -> Net()
+write :: IrcCommand -> Net()
 write msg = do
     h <- asks socket
     _ <- liftIO $ hPrintf h   "%s %s\r\n" s t
@@ -96,7 +98,7 @@ consoleWrite :: String -> Net()
 consoleWrite s = liftIO $ printf "%s\n" s
 
 -- say something to some(one/where)
-privmsg :: String -> String -> IrcMessage
+privmsg :: String -> String -> IrcCommand
 privmsg c s = toCmd "PRIVMSG" (c ++ " :" ++ s)
 
 -- handle and obey the master's orders
@@ -107,6 +109,7 @@ eval :: String -> Net ()
 -- eval "!uptime"  = write $ privmsg  (botChan c) uptime
 -- eval x | "!id "     `isPrefixOf` x = privmsg $ drop 4 x
 -- eval x | "!sää "    `isPrefixOf` x = weather' $ drop 5 x
+eval x | "!whois" `isPrefixOf` x = write (toCmd "whois" $ drop 7 x)
 eval "!quit"    = write (toCmd "QUIT" ":!ulos") >> liftIO exitSuccess
 eval _          = return ()
 
@@ -124,8 +127,17 @@ handleJoin user = do
     _ <- liftIO $ Handler.logUser c user
     isOp <- liftIO $ Handler.op c user
     case isOp of 
-        Just (IrcMessage {}) -> write $ fromJust isOp
+        Just (IrcCommand {}) -> write $ fromJust isOp
         _ -> return ()
+
+handleReply :: [String] -> Net()
+handleReply s = do
+    c <- asks config
+    if code == "311" then write (privmsg (botChan c) (nick ++ " " ++ ident))
+    else return ()
+    where code = s !! 1
+          nick = s !! 3
+          ident = show (s !! 4 ++ "@" ++ s !! 5)
 
 getNick :: [String] -> String
 getNick s = takeWhile (/= '!') $ drop 1 $ head s
