@@ -9,21 +9,21 @@ type Net = ReaderT Bot IO
 
 data Bot = Bot {
     starttime :: ClockTime
-    , socket :: Handle
-    , config :: Config
-    , db :: Connection
+    , socket  :: Handle
+    , config  :: Config
+    , db      :: Connection
     }
 
 data Config = Config {
-    server :: String
-    , port :: Int
+    server    :: String
+    , port    :: Int
     , botNick :: String
     , botChan :: String
-    , pass :: String
+    , pass    :: String
     } deriving (Read, Show)
 
 data User = User {
-    ident :: String
+    ident  :: String
     , nick :: String
     , chan :: String
     }
@@ -34,6 +34,6 @@ data Url = Url {
     }
 
 data IrcCommand = IrcCommand {
-    command :: String
+    command  :: String
     , params :: String
     }
