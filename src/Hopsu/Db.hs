@@ -1,7 +1,7 @@
 module Hopsu.Db where
 
-import Database.HDBC
-import Database.HDBC.Sqlite3
+import Database.Persist
+import Database.Persist.Sqlite
 import Data.ByteString.UTF8 as BS
 import Data.Bool()
 import System.IO.Unsafe
