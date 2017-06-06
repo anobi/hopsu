@@ -7,8 +7,6 @@ import System.Exit
 import System.Time
 import System.Directory
 
-import Database.HDBC.Sqlite3
-
 import Text.Printf
 
 import Data.List
@@ -24,6 +22,7 @@ import Prelude
 import Hopsu.Db as DB
 import Hopsu.Config
 import Hopsu.Heather
+import Hopsu.Handler
 
 data Bot = Bot {starttime :: ClockTime, socket :: Handle, config :: Config, db :: Connection}
 type Net = ReaderT Bot IO
@@ -44,7 +43,6 @@ connect = do
     d <- getHomeDirectory
     c <- readConfig $ d ++ "/.hopsu/hopsu.config"
     t <- getClockTime
-    dbconn <- connectSqlite3 $ d ++ "/.hopsu/hopsu.db"
     h <- connectTo (server c) (PortNumber (fromIntegral (port c)))
     hSetBuffering h NoBuffering
     hSetEncoding h utf8
@@ -107,12 +105,6 @@ eval "!uptime"  = uptime >>= privmsg
 eval "!quit"    = write "QUIT" ":!ulos" >> liftIO exitSuccess
 eval _          = return ()
 
--- tell the uptime
-uptime :: Net String
-uptime = do
-    now <- liftIO getClockTime
-    zero <- asks starttime
-    return . pretty $ diffClockTimes now zero
 
 -- function to wrap all the joining actions in
 userjoin :: String -> String -> String -> Net()
@@ -120,77 +112,6 @@ userjoin usernick ident ch = do
   Hopsu.Bot.logUser usernick ident ch
   op usernick ident ch
   return ()
-
--- ok this kind of thing (inputs, millions of strings) is getting pretty shitty
--- gotta create an user object or something and use that as an input
--- but that's a refactoring battle for another day
--- so ANYWAY this function checks if joiner already exists in users, add if not
--- update new nick if such things are necessary
-logUser :: String -> String -> String -> Net()
-logUser nick ident chan = do
-  consoleWrite "logging user??"
-  conn <- asks db
-  result <- liftIO $ DB.logUser conn nick ident chan
-  consoleWrite result
-    
-addop :: String -> Net ()
-addop n = write "WHOIS" n
-    
-op :: String -> String -> String -> Net ()
-op nick ident chan = do
-  conn <- asks db
-  o <- liftIO $ DB.isOp conn ident chan
-  if o
-    then write "MODE" $ chan ++ " +o " ++ nick
-    else consoleWrite "not opping lol"
-
-url :: String -> Net ()
-url s = do
-    c <- asks db
-    link <- liftIO $ DB.geturl c s
-    privmsg link
-
-newurl :: String -> Net ()
-newurl s = do
-    c <- asks db
-    strs <- liftIO $ splittan s
-    result <- liftIO $ DB.addurl c (head strs) (strs !! 1)
-    privmsg result
-
-splittan :: String -> IO [String]
-splittan s = return (words s)
-
-getNick :: [String] -> String
-getNick s = takeWhile (/= '!') $ drop 1 $ head s
-
-getIdent :: [String] -> String
-getIdent s = drop 1 $ dropWhile (/= '!') $ head s
-
-getChan :: [String] -> String
-getChan s = drop 1 $ last s
-
--- say hello to the guy who just joined the channel
-greet :: String -> Net ()
-greet x =
-    privmsg $ "Eyh " ++ guy ++ ", " ++ greeting
-    where
-        guy = takeWhile (/= '!') x
-        greeting = "loool"
-
-weather' :: String -> Net ()
-weather' city = do
-    w <- liftIO $ getWeather city
-    case w of
-        Just (Weather {}) -> privmsg $ tellWeather $ fromJust w
-        _ -> privmsg "juuh en tiärä..."
-
---
--- housekeeping stuff
---
-
-tellWeather :: Weather -> String
-tellWeather w =
-    "Elikkäs " ++ description w ++ ", lämpöä " ++ show (temp w) ++ " astetta ja tuuleepi " ++ show (wSpeed w) ++ " m/s suunnasta " ++ show (wDeg w)
 
 pretty :: TimeDiff -> String
 pretty td =
@@ -201,4 +122,3 @@ pretty td =
           metrics = [(86400,"d"),(3600,"h"),(60,"m"),(1,"s")]
           diffs = filter((/= 0) . fst) $ reverse $ snd $ 
                   foldl' merge (tdSec td,[]) metrics
-
